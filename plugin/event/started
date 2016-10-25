@@ -1,0 +1,5 @@
+#!/bin/bash
+source /boot/config/plugins/controlr/controlr.cfg
+if [ $SERVICE = enable ]; then
+	/usr/local/emhttp/plugins/controlr/scripts/start
+fi

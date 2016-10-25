@@ -1,0 +1,55 @@
+Version 1.0.0 - 2016-10-25
+- Improve script logic
+- Upload binary to github using fastlane
+- Update plugin metadata
+- Replace fastlane/github with github-release
+- Push unraid ControlR plugin
+- Implement initial version of Home page
+- Remove release scripts from test env
+- Remove package no longer required
+- Clean up code
+- Add operations definitions
+- Add README
+- Remove fastlane
+- Remove code no longer required
+- Clean up server code
+
+
+Version 0.3.0 - 2016-10-20
+- Remove content with incorrect syntax
+
+
+Version 0.2.0 - 2016-10-20
+- Create devops orchestration
+- Implement updateUser operation
+- Make it work on the server
+- Initial cleanup
+- Prepare for readiness
+- Create plugin bundle
+- Create bump-hook to add some metadata
+- Automate plugin deployment
+
+
+Version 0.1.0 - 2016-10-18
+- Initial commit
+- Basic server code and workflow
+- Factor out getting unRAID api data
+- Make api folder configurable
+- Enable jwt authentication and directed replies
+- Implement unRAID authentication
+- Solve lint issue
+- Enable ctags
+- Minor changes
+- Basic UI setup
+- Modify server code to accomodate client changes
+- Add login error handling
+- First iteration of home page UX
+- Add routing to client code
+- Fix api call
+- Adjust client code
+- Adjust server code
+- Implement basic login/logout functionality
+- Implement basic data websocket transport
+- Implement basic permissions interaction
+- Make UI functional
+- Enable support for previous versions
