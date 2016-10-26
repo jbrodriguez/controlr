@@ -15,7 +15,7 @@ type Settings struct {
 
 	LogDir string
 	WebDir string
-	ApiDir string
+	APIDir string
 	Port   string
 
 	Location string
@@ -27,7 +27,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 
 	location := SearchFile(name, locations)
 
-	flag.StringVar(&logDir, "logdir", "", "folder containing the log files")
+	flag.StringVar(&logDir, "logdir", "/boot/logs", "folder containing the log files")
 	flag.StringVar(&webDir, "webdir", "", "folder containing the ui")
 	flag.StringVar(&apiDir, "apidir", "/var/local/emhttp", "folders to look for api endpoints")
 	flag.StringVar(&port, "port", "2378", "port to run the server")
@@ -38,7 +38,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	s.Version = version
 	s.LogDir = logDir
 	s.WebDir = webDir
-	s.ApiDir = apiDir
+	s.APIDir = apiDir
 	s.Port = port
 	s.Location = location
 

@@ -60,7 +60,7 @@ func (a *App) Run(settings *lib.Settings) {
 
 	bus := pubsub.New(623)
 
-	data := a.getUnraidInfo(settings.ApiDir)
+	data := a.getUnraidInfo(settings.APIDir)
 	if data == nil {
 		mlog.Fatalf("Unable to retrieve unRAID info. Exiting now ...")
 	}

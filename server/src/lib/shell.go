@@ -6,8 +6,10 @@ import (
 	"os/exec"
 )
 
+// Callback - shell output handler
 type Callback func(line string)
 
+// Shell - shell executor
 func Shell(command string, callback Callback) {
 	cmd := exec.Command("/bin/sh", "-c", command)
 	out, err := cmd.StdoutPipe()
@@ -17,7 +19,7 @@ func Shell(command string, callback Callback) {
 
 	scanner := bufio.NewScanner(out)
 
-	if err := cmd.Start(); err != nil {
+	if err = cmd.Start(); err != nil {
 		log.Fatal("Unable to start command: ", err)
 	}
 

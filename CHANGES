@@ -1,3 +1,8 @@
+Version 1.0.1 - 2016-10-26
+- Make log to file as the default
+- Fix property name
+
+
 Version 1.0.0 - 2016-10-25
 - Improve script logic
 - Upload binary to github using fastlane
