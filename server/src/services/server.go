@@ -17,7 +17,9 @@ import (
 	"jbrodriguez/controlr/plugin/server/src/net"
 	// "os"
 	"github.com/kless/osutil/user/crypt"
+	"github.com/kless/osutil/user/crypt/md5_crypt"
 	"github.com/kless/osutil/user/crypt/sha256_crypt"
+	"github.com/kless/osutil/user/crypt/sha512_crypt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -155,17 +157,38 @@ func (s *Server) login(c echo.Context) (err error) {
 		shadowLine = line
 	})
 
-	re := regexp.MustCompile(`root:(\$5\$(.*?)\$.*?):`)
+	re := regexp.MustCompile(`root:(\$(.*?)\$(.*?)\$.*?):`)
 
 	saltString := ""
 	actualHash := ""
+	encType := ""
 	for _, match := range re.FindAllStringSubmatch(shadowLine, -1) {
 		actualHash = match[1]
-		saltString = match[2]
+		encType = match[2]
+		saltString = match[3]
 	}
 
-	crypto := crypt.New(crypt.SHA256)
-	saltPrefix := sha256_crypt.MagicPrefix
+	var crypto crypt.Crypter
+	saltPrefix := ""
+	// crypto := crypt.New(crypt.SHA256)
+	// saltPrefix := sha256_crypt.MagicPrefix
+	switch encType {
+	case "1":
+		crypto = crypt.New(crypt.MD5)
+		saltPrefix = md5_crypt.MagicPrefix
+		break
+	case "5":
+		crypto = crypt.New(crypt.SHA256)
+		saltPrefix = sha256_crypt.MagicPrefix
+		break
+	case "6":
+		crypto = crypt.New(crypt.SHA512)
+		saltPrefix = sha512_crypt.MagicPrefix
+		break
+	default:
+		mlog.Warning("Unknown encryption type: (%s)", encType)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
+	}
 
 	saltString = fmt.Sprintf("%s%s", saltPrefix, saltString)
 

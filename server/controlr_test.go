@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/mcuadros/go-version"
+	"regexp"
 	"testing"
 )
 
@@ -45,5 +46,31 @@ func TestCompare(t *testing.T) {
 		if res := version.Compare(test.vlo, test.vhi, ">="); res == !test.res {
 			t.Errorf("Comparing %q : %q, expected %t but got %t", test.vhi, test.vlo, !test.res, res)
 		}
+	}
+}
+
+func TestRegex(t *testing.T) {
+	re := regexp.MustCompile(`root:(\$(.*?)\$(.*?)\$.*?):`)
+	test := `root:$1$alpha$beta:`
+
+	saltString := ""
+	actualHash := ""
+	encType := ""
+	for _, match := range re.FindAllStringSubmatch(test, -1) {
+		actualHash = match[1]
+		encType = match[2]
+		saltString = match[3]
+	}
+
+	if saltString != `alpha` {
+		t.Errorf("Comparing %s : expected %s but got %s", "saltString", "alpha", saltString)
+	}
+
+	if actualHash != `$1$alpha$beta` {
+		t.Errorf("Comparing %s : expected %s but got %s", "actualHash", "$1$alpha$beta", actualHash)
+	}
+
+	if encType != `1` {
+		t.Errorf("Comparing %s : expected %s but got %s", "encType", "1", encType)
 	}
 }

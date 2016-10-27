@@ -24,7 +24,7 @@ export class Users extends Component {
 
 			<div className={cx('col-xs-11', 'ttu')}>
 			{ !hasUsers
-				? <div>No users are defined</div>
+				? <div>No users are defined. Add them in the main unRAID webGUI first.</div>
 				: <div>
 					{users.map( user => <Button key={user.name} text={user.name} selected={user.name === selected} onClick={this.onClick(user.name)}/> )}
 				</div>

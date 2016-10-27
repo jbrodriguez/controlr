@@ -1,3 +1,10 @@
+Version 1.0.2 - 2016-10-27
+- Add support for other encryption types
+- Fix lint issue
+- Process the perm change only if a user exists
+- Add message about adding users
+
+
 Version 1.0.1 - 2016-10-26
 - Make log to file as the default
 - Fix property name

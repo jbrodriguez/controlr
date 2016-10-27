@@ -114,6 +114,11 @@ export default class Store {
 	}
 
 	@action('setPerm') setPerm = (id, perm) => {
+		const user = this.users.find( user => user.name === this.selectedUser)
+		if (!user) {
+			return
+		}
+
 		const index = this.apps.findIndex( app => app.id === id)
 
 		let app = this.apps[index].clone()
@@ -122,7 +127,6 @@ export default class Store {
 		let newApps = [...this.apps]
 		newApps[index] = app
 
-		const user = this.users.find( user => user.name === this.selectedUser)
 		const perms = this.createPerms(newApps)
 
 		this.isBusy = true

@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Version - plugin version
 var Version string
 
 func main() {

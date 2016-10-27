@@ -1,0 +1,3 @@
+2016-10-27 - 1.0.2
+- Support additional encryption types
+- Improve message when there are no users
