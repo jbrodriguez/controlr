@@ -74,6 +74,7 @@ func (s *Server) Start() {
 		"/usr/local/emhttp/plugins/controlr",
 		"/usr/local/share/controlr",
 		cwd,
+		s.settings.WebDir,
 	}
 
 	location := lib.SearchFile("index.html", locations)
@@ -151,56 +152,58 @@ func (s *Server) login(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
 	}
 
-	// get the /etc/shadow entry for root
-	shadowLine := ""
-	lib.Shell("getent shadow root", func(line string) {
-		shadowLine = line
-	})
+	if !s.settings.Dev {
+		// get the /etc/shadow entry for root
+		shadowLine := ""
+		lib.Shell("getent shadow root", func(line string) {
+			shadowLine = line
+		})
 
-	re := regexp.MustCompile(`root:(\$(.*?)\$(.*?)\$.*?):`)
+		re := regexp.MustCompile(`root:(\$(.*?)\$(.*?)\$.*?):`)
 
-	saltString := ""
-	actualHash := ""
-	encType := ""
-	for _, match := range re.FindAllStringSubmatch(shadowLine, -1) {
-		actualHash = match[1]
-		encType = match[2]
-		saltString = match[3]
-	}
+		saltString := ""
+		actualHash := ""
+		encType := ""
+		for _, match := range re.FindAllStringSubmatch(shadowLine, -1) {
+			actualHash = match[1]
+			encType = match[2]
+			saltString = match[3]
+		}
 
-	var crypto crypt.Crypter
-	saltPrefix := ""
-	// crypto := crypt.New(crypt.SHA256)
-	// saltPrefix := sha256_crypt.MagicPrefix
-	switch encType {
-	case "1":
-		crypto = crypt.New(crypt.MD5)
-		saltPrefix = md5_crypt.MagicPrefix
-		break
-	case "5":
-		crypto = crypt.New(crypt.SHA256)
-		saltPrefix = sha256_crypt.MagicPrefix
-		break
-	case "6":
-		crypto = crypt.New(crypt.SHA512)
-		saltPrefix = sha512_crypt.MagicPrefix
-		break
-	default:
-		mlog.Warning("Unknown encryption type: (%s)", encType)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
-	}
+		var crypto crypt.Crypter
+		saltPrefix := ""
+		// crypto := crypt.New(crypt.SHA256)
+		// saltPrefix := sha256_crypt.MagicPrefix
+		switch encType {
+		case "1":
+			crypto = crypt.New(crypt.MD5)
+			saltPrefix = md5_crypt.MagicPrefix
+			break
+		case "5":
+			crypto = crypt.New(crypt.SHA256)
+			saltPrefix = sha256_crypt.MagicPrefix
+			break
+		case "6":
+			crypto = crypt.New(crypt.SHA512)
+			saltPrefix = sha512_crypt.MagicPrefix
+			break
+		default:
+			mlog.Warning("Unknown encryption type: (%s)", encType)
+			return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
+		}
 
-	saltString = fmt.Sprintf("%s%s", saltPrefix, saltString)
+		saltString = fmt.Sprintf("%s%s", saltPrefix, saltString)
 
-	shadowHash, err := crypto.Generate([]byte(password), []byte(saltString))
-	if err != nil {
-		mlog.Warning("Unable to create hash: %s", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
-	}
+		shadowHash, err := crypto.Generate([]byte(password), []byte(saltString))
+		if err != nil {
+			mlog.Warning("Unable to create hash: %s", err)
+			return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
+		}
 
-	if shadowHash != actualHash {
-		mlog.Warning("shadowHash != actualHash")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
+		if shadowHash != actualHash {
+			mlog.Warning("shadowHash != actualHash")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
+		}
 	}
 
 	// Create token

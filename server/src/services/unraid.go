@@ -99,8 +99,12 @@ func (u *Unraid) refresh(msg *pubsub.Message) {
 			return
 		}
 
+		mlog.Info("Getting users ...")
 		users := u.manager.GetUsers(_users)
+		mlog.Info("Got %d users", len(users))
+		mlog.Info("Getting apps ...")
 		apps := u.manager.GetApps(_dockers, _vms)
+		mlog.Info("Got %d apps", len(apps))
 
 		outbound := &dto.Packet{Topic: "model/REFRESHED", Payload: map[string]interface{}{"users": users, "apps": apps}}
 		u.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
@@ -129,7 +133,11 @@ func (u *Unraid) updateUser(msg *pubsub.Message) {
 }
 
 func (u *Unraid) get(resource string) (string, error) {
-	ep, _ := url.Parse(u.data["backend"])
+	ep, err := url.Parse(u.data["backend"])
+	if err != nil {
+		return "", err
+	}
+
 	ep.Path = path.Join(ep.Path, resource)
 
 	req, err := http.NewRequest("GET", ep.String(), nil)
@@ -147,13 +155,20 @@ func (u *Unraid) get(resource string) (string, error) {
 		return "", errors.New(resp.Status)
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
 
 	return string(body), nil
 }
 
 func (u *Unraid) post(resource string, args map[string]string) (string, error) {
-	ep, _ := url.Parse(u.data["backend"])
+	ep, err := url.Parse(u.data["backend"])
+	if err != nil {
+		return "", err
+	}
+
 	ep.Path = path.Join(ep.Path, resource)
 
 	data := url.Values{}

@@ -1,6 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/kless/osutil/user/crypt"
+	"github.com/kless/osutil/user/crypt/md5_crypt"
+	"github.com/kless/osutil/user/crypt/sha256_crypt"
+	"github.com/kless/osutil/user/crypt/sha512_crypt"
 	"github.com/mcuadros/go-version"
 	"regexp"
 	"testing"
@@ -72,5 +77,53 @@ func TestRegex(t *testing.T) {
 
 	if encType != `1` {
 		t.Errorf("Comparing %s : expected %s but got %s", "encType", "1", encType)
+	}
+}
+
+func TestEncrypt(t *testing.T) {
+	re := regexp.MustCompile(`family:(\$(.*?)\$(.*?)\$.*?):`)
+
+	shadowLine := `family:$5$tZ3/aLE/9CF$N9wOHr1PsCWwJVU4XR6uKidrnf2axbaxqyXLks0Aol1:17102:0:99999:7:::`
+
+	saltString := ""
+	actualHash := ""
+	encType := ""
+	for _, match := range re.FindAllStringSubmatch(shadowLine, -1) {
+		actualHash = match[1]
+		encType = match[2]
+		saltString = match[3]
+	}
+
+	var crypto crypt.Crypter
+	saltPrefix := ""
+	// crypto := crypt.New(crypt.SHA256)
+	// saltPrefix := sha256_crypt.MagicPrefix
+	switch encType {
+	case "1":
+		crypto = crypt.New(crypt.MD5)
+		saltPrefix = md5_crypt.MagicPrefix
+		break
+	case "5":
+		crypto = crypt.New(crypt.SHA256)
+		saltPrefix = sha256_crypt.MagicPrefix
+		break
+	case "6":
+		crypto = crypt.New(crypt.SHA512)
+		saltPrefix = sha512_crypt.MagicPrefix
+		break
+	default:
+		t.Errorf("Unknown encryption type: (%s)", encType)
+	}
+
+	saltString = fmt.Sprintf("%s%s", saltPrefix, saltString)
+
+	password := "password"
+	shadowHash, err := crypto.Generate([]byte(password), []byte(saltString))
+	if err != nil {
+		t.Errorf("Unable to create hash: %s", err)
+	}
+
+	if shadowHash != actualHash {
+		t.Errorf("Comparing %q: expected %q but got %q", "hash", actualHash, shadowHash)
 	}
 }

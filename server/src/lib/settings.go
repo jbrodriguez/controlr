@@ -17,6 +17,7 @@ type Settings struct {
 	WebDir string
 	APIDir string
 	Port   string
+	Dev    bool
 
 	Location string
 }
@@ -24,6 +25,7 @@ type Settings struct {
 // NewSettings constructor
 func NewSettings(name, version string, locations []string) (*Settings, error) {
 	var logDir, webDir, apiDir, port string
+	var dev bool
 
 	location := SearchFile(name, locations)
 
@@ -31,6 +33,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	flag.StringVar(&webDir, "webdir", "", "folder containing the ui")
 	flag.StringVar(&apiDir, "apidir", "/var/local/emhttp", "folders to look for api endpoints")
 	flag.StringVar(&port, "port", "2378", "port to run the server")
+	flag.BoolVar(&dev, "dev", false, "work in dev mode for some features")
 
 	flag.Parse()
 
@@ -41,6 +44,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	s.APIDir = apiDir
 	s.Port = port
 	s.Location = location
+	s.Dev = dev
 
 	return s, nil
 }
