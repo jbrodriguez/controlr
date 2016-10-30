@@ -1,3 +1,7 @@
+Version 1.0.4 - 2016-10-30
+- Modify logic to create release plugin
+
+
 Version 1.0.3 - 2016-10-28
 - Keep sim data inside our project
 - Cosmetic fixes to UI
