@@ -1,0 +1,5 @@
+2016-10-31 - 1.0.5
+- Add support script
+
+2016-10-30 - 1.0.4
+- Modify logic to create release plugin
