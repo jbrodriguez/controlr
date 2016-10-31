@@ -40,6 +40,7 @@ mkdir controlr
 pushd controlr
 
 # get files
+curl -X GET -u $AUTH "$HTTP/" -o index.html
 curl -X GET -u $AUTH "$HTTP/Dashboard" -o dashboard.html
 curl -X GET -u $AUTH "$HTTP/Docker" -o docker.html
 curl -X GET -u $AUTH "$HTTP/VMs" -o vms.html
