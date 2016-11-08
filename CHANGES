@@ -1,3 +1,7 @@
+Version 1.1.0 - 2016-11-08
+- Create api endpoint to support ControlR app
+
+
 Version 1.0.6 - 2016-10-31
 - Add index to support files
 

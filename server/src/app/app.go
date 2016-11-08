@@ -74,9 +74,11 @@ func (a *App) Run(settings *lib.Settings) {
 
 	unraid := services.NewUnraid(bus, settings, data)
 	server := services.NewServer(bus, settings, data)
+	proxy := services.NewProxy(bus, settings, data)
 
 	unraid.Start()
 	server.Start()
+	proxy.Start()
 
 	mlog.Info("Press Ctrl+C to stop ...")
 
@@ -84,6 +86,7 @@ func (a *App) Run(settings *lib.Settings) {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 	mlog.Info("Received signal: (%s) ... shutting down the app now ...", <-c)
 
+	proxy.Stop()
 	server.Stop()
 	unraid.Stop()
 

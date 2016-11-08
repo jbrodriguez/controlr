@@ -3,6 +3,7 @@ package lib
 import (
 	"bufio"
 	"log"
+	"os"
 	"os/exec"
 )
 
@@ -32,4 +33,13 @@ func Shell(command string, callback Callback) {
 	if err != nil {
 		log.Fatal("Unable to wait for process to finish: ", err)
 	}
+}
+
+// Run - simple shell execution
+func Run(name string, arg ...string) (string, error) {
+	cmd := exec.Command(name, arg...)
+	cmd.Env = os.Environ()
+	cmd.Stderr = os.Stderr
+	result, err := cmd.Output()
+	return string(result), err
 }

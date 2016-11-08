@@ -1,0 +1,2 @@
+2016-11-08 - 1.1.0
+- Create api endpoint to support ControlR app

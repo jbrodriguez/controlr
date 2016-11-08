@@ -139,11 +139,12 @@ func (s *Server) react() {
 	}
 }
 
-func (s *Server) getVersion(c echo.Context) (err error) {
-	return c.JSON(http.StatusOK, map[string]string{"version": s.settings.Version})
+func (s *Server) getVersion(c echo.Context) error {
+	c.JSON(http.StatusOK, map[string]string{"version": s.settings.Version})
+	return nil
 }
 
-func (s *Server) login(c echo.Context) (err error) {
+func (s *Server) login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
@@ -224,7 +225,9 @@ func (s *Server) login(c echo.Context) (err error) {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"token": t})
+	c.JSON(http.StatusOK, map[string]string{"token": t})
+
+	return nil
 }
 
 // WEBSOCKET handler

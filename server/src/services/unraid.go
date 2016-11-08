@@ -31,23 +31,28 @@ type Unraid struct {
 	client *http.Client
 	data   map[string]string
 
-	manager specific.Manager
+	manager     specific.Manager
+	logLocation map[string]string
 }
 
 // NewUnraid - constructor
 func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]string) *Unraid {
-	core := &Unraid{
+	unraid := &Unraid{
 		bus:      bus,
 		settings: settings,
 		client:   &http.Client{Timeout: time.Second * 10},
 		data:     data,
+		manager:  specific.NewManager(data["version"]),
+		logLocation: map[string]string{
+			"system": "/var/log/syslog",
+			"docker": "/var/log/docker.log",
+			"vm":     "/var/log/libvirt/libvirtd.log",
+		},
 	}
 
-	core.manager = specific.NewManager(data["version"])
+	unraid.init()
 
-	core.init()
-
-	return core
+	return unraid
 }
 
 // Start service
@@ -56,6 +61,7 @@ func (u *Unraid) Start() (err error) {
 
 	u.mailbox = u.register(u.bus, "model/REFRESH", u.refresh)
 	u.registerAdditional(u.bus, "model/UPDATE_USER", u.updateUser, u.mailbox)
+	u.registerAdditional(u.bus, "api/GET_LOG", u.getLog, u.mailbox)
 
 	go u.react()
 
@@ -130,6 +136,20 @@ func (u *Unraid) updateUser(msg *pubsub.Message) {
 
 	outbound := &dto.Packet{Topic: "model/USER_UPDATED", Payload: map[string]interface{}{"status": "ok"}}
 	u.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
+}
+
+func (u *Unraid) getLog(msg *pubsub.Message) {
+	logType := msg.Payload.(string)
+
+	log := make([]string, 0)
+
+	cmd := "tail -n 40 " + u.logLocation[logType]
+
+	lib.Shell(cmd, func(line string) {
+		log = append(log, line)
+	})
+
+	msg.Reply <- log
 }
 
 func (u *Unraid) get(resource string) (string, error) {
