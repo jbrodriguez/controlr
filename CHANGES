@@ -1,3 +1,8 @@
+Version 1.1.1 - 2016-11-10
+- Check for log presence before accessing it
+- Replace Gitlab CI with cix
+
+
 Version 1.1.0 - 2016-11-08
 - Create api endpoint to support ControlR app
 

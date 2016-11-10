@@ -143,6 +143,19 @@ func (u *Unraid) getLog(msg *pubsub.Message) {
 
 	log := make([]string, 0)
 
+	exists, err := lib.Exists(u.logLocation[logType])
+	if err != nil {
+		mlog.Warning("Unable to check for log existence: %s", err)
+		msg.Reply <- log
+		return
+	}
+
+	if !exists {
+		mlog.Warning("Log %s is not present in the system", logType)
+		msg.Reply <- log
+		return
+	}
+
 	cmd := "tail -n 40 " + u.logLocation[logType]
 
 	lib.Shell(cmd, func(line string) {
