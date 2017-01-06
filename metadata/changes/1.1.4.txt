@@ -1,0 +1,3 @@
+2017-01-06 - 1.1.4
+- Add debug endpoint
+- Remove support script

@@ -54,7 +54,13 @@ func (p *Proxy) Start() {
 	// p.engine.Static("/", filepath.Join(location, "index.html"))
 
 	r := p.engine.Group(proxyVersion)
+	r.Use(mw.BasicAuth(func(usr, pwd string) bool {
+		mlog.Info("auth:usr:%s", usr)
+		return true
+	}))
 	r.Get("/log/:logType", p.getLog)
+	r.Get("/debug", p.debugGet)
+	r.Post("/debug", p.debugPost)
 
 	port := fmt.Sprintf(":%s", p.settings.ProxyPort)
 	go p.engine.Run(standard.New(port))
@@ -78,4 +84,16 @@ func (p *Proxy) getLog(c echo.Context) (err error) {
 	// c.JSON(200, &resp)
 
 	return c.JSON(http.StatusOK, &resp)
+}
+
+func (p *Proxy) debugGet(c echo.Context) (err error) {
+	mlog.Info("received debug/get")
+	return c.String(http.StatusOK, "Ok")
+}
+
+func (p *Proxy) debugPost(c echo.Context) (err error) {
+	req := c.FormParams()
+	mlog.Info("req=%+v", req)
+
+	return c.String(http.StatusOK, "Ok")
 }
