@@ -39,6 +39,8 @@ func NewProxy(bus *pubsub.PubSub, settings *lib.Settings, data map[string]string
 	return server
 }
 
+const basic = "Basic"
+
 // Start service
 func (p *Proxy) Start() {
 	mlog.Info("Starting service Proxy ...")
@@ -54,9 +56,24 @@ func (p *Proxy) Start() {
 	// p.engine.Static("/", filepath.Join(location, "index.html"))
 
 	r := p.engine.Group(proxyVersion)
-	r.Use(mw.BasicAuth(func(usr, pwd string) bool {
-		mlog.Info("auth:usr:%s", usr)
-		return true
+	r.Use(mw.BasicAuthWithConfig(mw.BasicAuthConfig{
+		Skipper: func(c echo.Context) bool {
+			auth := c.Request().Header().Get(echo.HeaderAuthorization)
+			l := len(basic)
+
+			if len(auth) > l+1 && auth[:l] == basic {
+				if auth[l+1:] == "null" {
+					// mlog.Info("auth: %s", auth)
+					return true
+				}
+			}
+
+			return false
+		},
+		Validator: func(usr, pwd string) bool {
+			// mlog.Info("auth:usr:%s", usr)
+			return true
+		},
 	}))
 	r.Get("/log/:logType", p.getLog)
 	r.Get("/debug", p.debugGet)
@@ -75,6 +92,7 @@ func (p *Proxy) Stop() {
 
 func (p *Proxy) getLog(c echo.Context) (err error) {
 	logType := c.Param("logType")
+	mlog.Info("log (%s) requested", logType)
 
 	msg := &pubsub.Message{Payload: logType, Reply: make(chan interface{}, capacity)}
 	p.bus.Pub(msg, "api/GET_LOG")

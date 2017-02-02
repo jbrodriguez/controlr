@@ -118,5 +118,12 @@ func (a *App) getUnraidInfo(location string) map[string]string {
 	tmp, _ = file.Get("", "version")
 	data["version"] = strings.Replace(tmp, "\"", "", -1)
 
+	token, ok := file.Get("", "csrf_token")
+	if !ok {
+		data["csrf_token"] = ""
+	} else {
+		data["csrf_token"] = strings.Replace(token, "\"", "", -1)
+	}
+
 	return data
 }

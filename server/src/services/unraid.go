@@ -125,6 +125,9 @@ func (u *Unraid) updateUser(msg *pubsub.Message) {
 		"userDesc":    args["perms"].(string),
 		"cmdUserEdit": "Apply",
 	}
+	if u.data["csrf_token"] != "" {
+		data["csrf_token"] = u.data["csrf_token"]
+	}
 
 	_, err := u.post("/update.htm", data)
 	if err != nil {
