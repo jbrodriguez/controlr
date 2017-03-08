@@ -78,6 +78,7 @@ func (p *Proxy) Start() {
 	r.Get("/log/:logType", p.getLog)
 	r.Get("/debug", p.debugGet)
 	r.Post("/debug", p.debugPost)
+	r.Get("/mac", p.getMac)
 
 	port := fmt.Sprintf(":%s", p.settings.ProxyPort)
 	go p.engine.Run(standard.New(port))
@@ -114,4 +115,17 @@ func (p *Proxy) debugPost(c echo.Context) (err error) {
 	mlog.Info("req=%+v", req)
 
 	return c.String(http.StatusOK, "Ok")
+}
+
+func (p *Proxy) getMac(c echo.Context) (err error) {
+	mlog.Info("received /mac")
+
+	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
+	p.bus.Pub(msg, "api/GET_MAC")
+
+	reply := <-msg.Reply
+	resp := reply.(string)
+	// c.JSON(200, &resp)
+
+	return c.JSON(http.StatusOK, &resp)
 }

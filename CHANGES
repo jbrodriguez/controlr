@@ -1,3 +1,7 @@
+Version 1.2.0 - 2017-03-08
+- Add endpoint to obtain mac address
+
+
 Version 1.1.5 - 2017-02-02
 - Accept requests with no password set
 - Support 6.3.0-rc9

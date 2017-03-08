@@ -12,6 +12,7 @@ import (
 	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
 	"jbrodriguez/controlr/plugin/server/src/specific"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -62,6 +63,7 @@ func (u *Unraid) Start() (err error) {
 	u.mailbox = u.register(u.bus, "model/REFRESH", u.refresh)
 	u.registerAdditional(u.bus, "model/UPDATE_USER", u.updateUser, u.mailbox)
 	u.registerAdditional(u.bus, "api/GET_LOG", u.getLog, u.mailbox)
+	u.registerAdditional(u.bus, "api/GET_MAC", u.getMac, u.mailbox)
 
 	go u.react()
 
@@ -166,6 +168,21 @@ func (u *Unraid) getLog(msg *pubsub.Message) {
 	})
 
 	msg.Reply <- log
+}
+
+func (u *Unraid) getMac(msg *pubsub.Message) {
+	mac := ""
+
+	ifaces, _ := net.Interfaces()
+	for _, iface := range ifaces {
+		// mlog.Info("[%s] = %s", iface.Name, iface.HardwareAddr)
+		if iface.Name == "eth0" {
+			mac = fmt.Sprintf("%s", iface.HardwareAddr)
+			break
+		}
+	}
+
+	msg.Reply <- mac
 }
 
 func (u *Unraid) get(resource string) (string, error) {
