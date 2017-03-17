@@ -48,6 +48,8 @@ Prepare for installation.
 -->
 <FILE Run="/bin/bash">
 <INLINE>
+running=$(pidof controlr | wc -w)
+
 # Let's stop the controlr process, if it's running
 /usr/local/emhttp/plugins/&name;/scripts/stop
 
@@ -59,6 +61,11 @@ rm -f $(ls /boot/config/plugins/&name;/&name;*.tgz 2>/dev/null | grep -v '&versi
 
 # Install the 'bundle'.
 tar -xf /boot/config/plugins/&name;/&bundle; -C /usr/local/emhttp/plugins
+
+# start the plugin if it was running previously
+if [ $running -eq 1 ]; then
+	nohup /usr/local/emhttp/plugins/&name;/scripts/start > /dev/null 2>&1 &
+fi
 
 echo ""
 echo "-----------------------------------------------------------"

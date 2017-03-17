@@ -1,6 +1,6 @@
 {
   "name": "controlr",
-  "version": "1.1.4",
+  "version": "1.2.1",
   "description": "ControlR helper plugin",
   "scripts": {
     "start": "node server.js",
