@@ -64,7 +64,7 @@ tar -xf /boot/config/plugins/&name;/&bundle; -C /usr/local/emhttp/plugins
 
 # start the plugin if it was running previously
 if [ $running -eq 1 ]; then
-	nohup /usr/local/emhttp/plugins/&name;/scripts/start > /dev/null 2>&1 &
+	/usr/local/emhttp/plugins/&name;/scripts/start
 fi
 
 echo ""

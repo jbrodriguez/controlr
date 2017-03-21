@@ -1,3 +1,7 @@
+Version 1.2.2 - 2017-03-20
+- Fix start script invocation
+
+
 Version 1.2.1 - 2017-03-17
 - Start the plugin on install (if it was running)
 
