@@ -2,17 +2,23 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"os/signal"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"syscall"
+
+	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/services"
+
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
 	"github.com/vaughan0/go-ini"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/services"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"strings"
-	"syscall"
 )
+
+const emhttpRe = `.*?emhttp(.*)$`
 
 // App empty placeholder
 type App struct {
@@ -65,12 +71,27 @@ func (a *App) Run(settings *lib.Settings) {
 		mlog.Fatalf("Unable to retrieve unRAID info. Exiting now ...")
 	}
 
-	template := "http://127.0.0.1%s/"
-	replacement := ""
-	if data["port"] != "80" {
-		replacement = ":" + data["port"]
+	mlog.Info("Connections to emhttp via %s:%s ...", data["protocol"], data["port"])
+
+	exists, err := lib.Exists(filepath.Join(settings.CertDir, "cert.pem"))
+	if err != nil {
+		mlog.Warning("Unable to check for certs presence: %s", err)
 	}
-	data["backend"] = fmt.Sprintf(template, replacement)
+
+	if !exists {
+		mlog.Info("No certs are available, generating ...")
+		err := lib.GenerateCerts(data["name"], settings.CertDir)
+		if err != nil {
+			mlog.Warning("Unable to generate certs: %s", err)
+		}
+	}
+
+	template := "%s://127.0.0.1%s/"
+	port := ""
+	if (data["protocol"] == "http" && data["port"] != "80") || (data["protocol"] == "https" && data["port"] != "443") {
+		port = ":" + data["port"]
+	}
+	data["backend"] = fmt.Sprintf(template, data["protocol"], port)
 
 	unraid := services.NewUnraid(bus, settings, data)
 	server := services.NewServer(bus, settings, data)
@@ -103,13 +124,7 @@ func (a *App) getUnraidInfo(location string) map[string]string {
 
 	data = make(map[string]string, 0)
 
-	tmp, _ := file.Get("", "emhttpPort")
-	data["port"] = strings.Replace(tmp, "\"", "", -1)
-
-	tmp, _ = file.Get("", "GATEWAY")
-	data["gateway"] = strings.Replace(tmp, "\"", "", -1)
-
-	tmp, _ = file.Get("", "NAME")
+	tmp, _ := file.Get("", "NAME")
 	data["name"] = strings.Replace(tmp, "\"", "", -1)
 
 	tmp, _ = file.Get("", "timeZone")
@@ -124,6 +139,35 @@ func (a *App) getUnraidInfo(location string) map[string]string {
 	} else {
 		data["csrf_token"] = strings.Replace(token, "\"", "", -1)
 	}
+
+	cat := exec.Command("cat", "/boot/config/go")
+	grep := exec.Command("grep", "emhttp")
+
+	// Run the pipeline
+	output, stderr, err := lib.Pipeline(cat, grep)
+	if err != nil {
+		mlog.Warning("Failed to run commands to get emhttp port from config: %s\n", err)
+	}
+
+	// Print the stderr, if any
+	if len(stderr) > 0 {
+		mlog.Warning("Error while reading config (stderr): %s\n", stderr)
+	}
+
+	re := regexp.MustCompile(emhttpRe)
+	args := re.FindStringSubmatch(strings.Trim(string(output), "\n\r"))
+
+	err, secure, port := lib.GetPort(args)
+	if err != nil {
+		mlog.Warning("Unable to get emhttp port (using defaults now): %s", err)
+	}
+
+	if secure {
+		data["protocol"] = "https"
+	} else {
+		data["protocol"] = "http"
+	}
+	data["port"] = port
 
 	return data
 }

@@ -17,7 +17,9 @@ export default class Socket {
 		this.opened && this.opened()
 	}
 
-	onClose = () => { console.log('websocket closed') }
+	onClose = () => {
+		console.log('websocket closed')
+	}
 
 	onMessage = reply => {
 		const data = JSON.parse(reply.data)
@@ -25,6 +27,10 @@ export default class Socket {
 		fn && fn(data.payload)
 	}
 
-	send = (topic, data) => { this.ws.send(JSON.stringify({topic, payload: data})) }
-	register = (action, fn) => { this.methods[action] = fn }
+	send = (topic, data) => {
+		this.ws.send(JSON.stringify({ topic, payload: data }))
+	}
+	register = (action, fn) => {
+		this.methods[action] = fn
+	}
 }

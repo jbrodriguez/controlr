@@ -26,42 +26,53 @@ export default class Store {
 
 	@observable selectedUser = ''
 
-	getUsers = _ => this.users.slice().sort( (a,b) => { return (a.idx > b.idx) ? 1 : ((b.idx > a.idx) ? -1 : 0)})
+	getUsers = _ =>
+		this.users.slice().sort((a, b) => {
+			return a.idx > b.idx ? 1 : b.idx > a.idx ? -1 : 0
+		})
 	getApps = _ => this.apps.slice()
 
 	getVersion = _ => {
-		this.api.getVersion()
-			.then(action('gotVersion', data => {
+		this.api.getVersion().then(
+			action('gotVersion', data => {
 				this.version = data.version
-			}))
+			}),
+		)
 	}
 
 	@action('login') login = (authParams, callback) => {
 		this.isLoading = true
 
-		this.api.login(authParams)
-			.then(action('loginSuccess', data => {
-				this.isLoading = false
-				this.isAuthorized = true
-				this.username = authParams.username
-				this.token = data.token
+		this.api
+			.login(authParams)
+			.then(
+				action('loginSuccess', data => {
+					this.isLoading = false
+					this.isAuthorized = true
+					this.username = authParams.username
+					this.token = data.token
 
-				this.hasError = false
-				this.error = {}
+					this.hasError = false
+					this.error = {}
 
-				callback(true)
-			}))
-			.catch(action('loginError', err => {
-				this.isLoading = false
-				this.isAuthorized = false
-				this.username = ''
-				this.token = ''
+					// eslint-disable-next-line
+					callback(true)
+				}),
+			)
+			.catch(
+				action('loginError', err => {
+					this.isLoading = false
+					this.isAuthorized = false
+					this.username = ''
+					this.token = ''
 
-				this.hasError = true
-				this.error = `${err.code} (${err.msg})`
+					this.hasError = true
+					this.error = `${err.code} (${err.msg})`
 
-				callback(false)
-			}))
+					// eslint-disable-next-line
+					callback(false)
+				}),
+			)
 	}
 
 	@action('logout') logout = _ => {
@@ -90,8 +101,8 @@ export default class Store {
 	}
 
 	@action('model/REFRESHED') refreshed = payload => {
-		this.users = payload.users.map( user => new User(user.idx, user.name, user.desc) )
-		this.apps = payload.apps.map( app => new App(app.name, app.type, app.logo, app.id))
+		this.users = payload.users.map(user => new User(user.idx, user.name, user.desc))
+		this.apps = payload.apps.map(app => new App(app.name, app.type, app.logo, app.id))
 
 		if (payload.users.length > 0) {
 			if (this.selectedUser !== '') {
@@ -105,21 +116,23 @@ export default class Store {
 	}
 
 	@action('selectUser') selectUser = name => {
-		const user = this.users.find( user => user.name === name)
+		const user = this.users.find(user => user.name === name)
 		const perms = this.parsePerms(user.desc)
 
-		this.apps.forEach( app => { app.applyPerms(perms[app.name.toLowerCase()]) })
+		this.apps.forEach(app => {
+			app.applyPerms(perms[app.name.toLowerCase()])
+		})
 
 		this.selectedUser = name
 	}
 
 	@action('setPerm') setPerm = (id, perm) => {
-		const user = this.users.find( user => user.name === this.selectedUser)
+		const user = this.users.find(user => user.name === this.selectedUser)
 		if (!user) {
 			return
 		}
 
-		const index = this.apps.findIndex( app => app.id === id)
+		const index = this.apps.findIndex(app => app.id === id)
 
 		let app = this.apps[index].clone()
 		app.setPerm(perm)
@@ -130,7 +143,7 @@ export default class Store {
 		const perms = this.createPerms(newApps)
 
 		this.isBusy = true
-		this.socket.send('model/UPDATE_USER', {idx: user.idx, name: user.name, perms })
+		this.socket.send('model/UPDATE_USER', { idx: user.idx, name: user.name, perms })
 	}
 
 	@action('model/USER_UPDATED') userUpdated = payload => {
@@ -144,24 +157,33 @@ export default class Store {
 
 		this.hasError = true
 		this.error = payload.error
-
 	}
 
-	@computed get hasUsers() { return this.users.length > 0 }
-	@computed get hasApps() { return this.apps.length > 0 }
+	@computed
+	get hasUsers() {
+		return this.users.length > 0
+	}
+	@computed
+	get hasApps() {
+		return this.apps.length > 0
+	}
 
 	createPerms = apps => {
 		let perms = ''
 
-		apps.forEach( app => {
+		apps.forEach(app => {
 			if (!app.visible) {
 				return
 			}
 
 			if (perms === '') {
-				perms = `${app.name.toLowerCase()}|${app.read ? 'r' : '-'}${app.write ? 'w' : '-'}${app.execute ? 'x' : '-'}`
+				perms = `${app.name.toLowerCase()}|${app.read ? 'r' : '-'}${app.write ? 'w' : '-'}${app.execute
+					? 'x'
+					: '-'}`
 			} else {
-				perms += `,${app.name.toLowerCase()}|${app.read ? 'r' : '-'}${app.write ? 'w' : '-'}${app.execute ? 'x' : '-'}`
+				perms += `,${app.name.toLowerCase()}|${app.read ? 'r' : '-'}${app.write ? 'w' : '-'}${app.execute
+					? 'x'
+					: '-'}`
 			}
 		})
 
@@ -199,13 +221,13 @@ export default class Store {
 
 			const match = /([r-][w-][x-])/.test(perm)
 			if (!match) {
-				perms[name] = {visible: false}
+				perms[name] = { visible: false }
 				continue
 			}
 
 			const r = perm.charAt(0)
 			if (r === '-') {
-				perms[name] = {visible: false}
+				perms[name] = { visible: false }
 				continue
 			}
 
@@ -213,21 +235,21 @@ export default class Store {
 			const x = perm.charAt(2)
 
 			if (w === 'w' && x === 'x') {
-				perms[name] = {visible: true, allowed: {read: true, write: true, execute: true}}
+				perms[name] = { visible: true, allowed: { read: true, write: true, execute: true } }
 				continue
 			}
 
-			let allowed = Object.assign({}, {read: true})
+			let allowed = Object.assign({}, { read: true })
 
 			if (w === 'w') {
-				Object.assign(allowed, {write: true})
+				Object.assign(allowed, { write: true })
 			}
 
 			if (x === 'x') {
-				Object.assign(allowed, {execute: true})
+				Object.assign(allowed, { execute: true })
 			}
 
-			perms[name] = {visible: true, allowed}
+			perms[name] = { visible: true, allowed }
 		}
 
 		return perms

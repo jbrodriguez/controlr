@@ -1,0 +1,19 @@
+2017-06-15 - 2.0.0
+
+This release provides initial support for unRAID 6.4.x+.
+
+The app is now reachable via both http and https.
+
+When connecting via https, you'll get a warning since it
+uses a self-signed certificate, but you can dismiss it.
+
+It will generate the certificates if they're not present in
+their default location (/boot/config/plugins/controlr).
+
+You can use your own (maybe Let's Encrypt created), to
+prevent the warning from showing at all.
+
+Additionally, the following features/fixes were added:
+- Upgraded packages
+- Improved port detection
+- Modified jwt secret generation

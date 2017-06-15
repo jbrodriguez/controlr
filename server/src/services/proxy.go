@@ -2,14 +2,16 @@ package services
 
 import (
 	"fmt"
+	"net/http"
+	"path/filepath"
+
+	// "jbrodriguez/controlr/plugin/server/src/dto"
+	"jbrodriguez/controlr/plugin/server/src/lib"
+
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	mw "github.com/labstack/echo/middleware"
-	// "jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"net/http"
 )
 
 const (
@@ -58,7 +60,7 @@ func (p *Proxy) Start() {
 	r := p.engine.Group(proxyVersion)
 	r.Use(mw.BasicAuthWithConfig(mw.BasicAuthConfig{
 		Skipper: func(c echo.Context) bool {
-			auth := c.Request().Header().Get(echo.HeaderAuthorization)
+			auth := c.Request().Header.Get(echo.HeaderAuthorization)
 			l := len(basic)
 
 			if len(auth) > l+1 && auth[:l] == basic {
@@ -70,20 +72,24 @@ func (p *Proxy) Start() {
 
 			return false
 		},
-		Validator: func(usr, pwd string) bool {
+		Validator: func(usr, pwd string, c echo.Context) (error, bool) {
 			// mlog.Info("auth:usr:%s", usr)
-			return true
+			return nil, true
 		},
 	}))
-	r.Get("/log/:logType", p.getLog)
-	r.Get("/debug", p.debugGet)
-	r.Post("/debug", p.debugPost)
-	r.Get("/mac", p.getMac)
+	r.GET("/log/:logType", p.getLog)
+	r.GET("/debug", p.debugGet)
+	r.POST("/debug", p.debugPost)
+	r.GET("/mac", p.getMac)
 
 	port := fmt.Sprintf(":%s", p.settings.ProxyPort)
-	go p.engine.Run(standard.New(port))
+	go p.engine.Start(port)
 
-	mlog.Info("Proxy started listening on %s", port)
+	sproxyport := fmt.Sprintf(":%s", p.settings.SProxyPort)
+	go p.engine.StartTLS(sproxyport, filepath.Join(p.settings.CertDir, "cert.pem"), filepath.Join(p.settings.CertDir, "key.pem"))
+
+	mlog.Info("Proxy started listening http on %s", port)
+	mlog.Info("Proxy started listening https on %s", sproxyport)
 }
 
 // Stop service
@@ -95,7 +101,7 @@ func (p *Proxy) getLog(c echo.Context) (err error) {
 	logType := c.Param("logType")
 	mlog.Info("log (%s) requested", logType)
 
-	msg := &pubsub.Message{Payload: logType, Reply: make(chan interface{}, capacity)}
+	msg := &pubsub.Message{Payload: logType, Reply: make(chan interface{}, proxyCapacity)}
 	p.bus.Pub(msg, "api/GET_LOG")
 
 	reply := <-msg.Reply
@@ -111,7 +117,7 @@ func (p *Proxy) debugGet(c echo.Context) (err error) {
 }
 
 func (p *Proxy) debugPost(c echo.Context) (err error) {
-	req := c.FormParams()
+	req, _ := c.FormParams()
 	mlog.Info("req=%+v", req)
 
 	return c.String(http.StatusOK, "Ok")
@@ -120,7 +126,7 @@ func (p *Proxy) debugPost(c echo.Context) (err error) {
 func (p *Proxy) getMac(c echo.Context) (err error) {
 	mlog.Info("received /mac")
 
-	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
+	msg := &pubsub.Message{Reply: make(chan interface{}, proxyCapacity)}
 	p.bus.Pub(msg, "api/GET_MAC")
 
 	reply := <-msg.Reply

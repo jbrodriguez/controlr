@@ -62,7 +62,10 @@ export default class App {
 
 	clone = _ => {
 		let app = new App(this.name, this.type, this.logo, this.id)
-		app.applyPerms({visible: this.visible, allowed: {read: this.read, write: this.write, execute: this.execute}})
+		app.applyPerms({
+			visible: this.visible,
+			allowed: { read: this.read, write: this.write, execute: this.execute },
+		})
 		return app
 	}
 }

@@ -4,30 +4,31 @@ import (
 	// "encoding/base64"
 	"errors"
 	"fmt"
-	// "github.com/ddliu/go-httpclient"
-	"github.com/jbrodriguez/mlog"
-	"github.com/jbrodriguez/pubsub"
-	// "github.com/vaughan0/go-ini"
 	"io/ioutil"
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/specific"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"time"
+
+	// "github.com/ddliu/go-httpclient"
+	"github.com/jbrodriguez/actor"
+	"github.com/jbrodriguez/mlog"
+	"github.com/jbrodriguez/pubsub"
+	// "github.com/vaughan0/go-ini"
+
+	"jbrodriguez/controlr/plugin/server/src/dto"
+	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/specific"
 )
 
 // Unraid service
 type Unraid struct {
-	Service
-
 	bus      *pubsub.PubSub
 	settings *lib.Settings
 
-	mailbox chan *pubsub.Mailbox
+	actor *actor.Actor
 
 	client *http.Client
 	data   map[string]string
@@ -41,6 +42,7 @@ func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 	unraid := &Unraid{
 		bus:      bus,
 		settings: settings,
+		actor:    actor.NewActor(bus),
 		client:   &http.Client{Timeout: time.Second * 10},
 		data:     data,
 		manager:  specific.NewManager(data["version"]),
@@ -51,8 +53,6 @@ func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 		},
 	}
 
-	unraid.init()
-
 	return unraid
 }
 
@@ -60,12 +60,12 @@ func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 func (u *Unraid) Start() (err error) {
 	mlog.Info("starting service Unraid ...")
 
-	u.mailbox = u.register(u.bus, "model/REFRESH", u.refresh)
-	u.registerAdditional(u.bus, "model/UPDATE_USER", u.updateUser, u.mailbox)
-	u.registerAdditional(u.bus, "api/GET_LOG", u.getLog, u.mailbox)
-	u.registerAdditional(u.bus, "api/GET_MAC", u.getMac, u.mailbox)
+	u.actor.Register("model/REFRESH", u.refresh)
+	u.actor.Register("model/UPDATE_USER", u.updateUser)
+	u.actor.Register("api/GET_LOG", u.getLog)
+	u.actor.Register("api/GET_MAC", u.getMac)
 
-	go u.react()
+	go u.actor.React()
 
 	return nil
 }
@@ -73,12 +73,6 @@ func (u *Unraid) Start() (err error) {
 // Stop service
 func (u *Unraid) Stop() {
 	mlog.Info("stopped service Unraid ...")
-}
-
-func (u *Unraid) react() {
-	for mbox := range u.mailbox {
-		u.dispatch(mbox.Topic, mbox.Content)
-	}
 }
 
 func (u *Unraid) refresh(msg *pubsub.Message) {

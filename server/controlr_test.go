@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"jbrodriguez/controlr/plugin/server/src/lib"
+	"regexp"
+	"testing"
+
 	"github.com/kless/osutil/user/crypt"
 	"github.com/kless/osutil/user/crypt/md5_crypt"
 	"github.com/kless/osutil/user/crypt/sha256_crypt"
 	"github.com/kless/osutil/user/crypt/sha512_crypt"
 	"github.com/mcuadros/go-version"
-	"regexp"
-	"testing"
 )
 
 // t.deepEqual(version_compare('6.2.0-beta1', '6.1.4', '>='), true, '6.2.0-beta1 not >= than 6.1.4')
@@ -125,5 +127,63 @@ func TestEncrypt(t *testing.T) {
 
 	if shadowHash != actualHash {
 		t.Errorf("Comparing %q: expected %q but got %q", "hash", actualHash, shadowHash)
+	}
+}
+
+func TestEmhttp(t *testing.T) {
+	re := regexp.MustCompile(`.*?emhttp(.*)$`)
+
+	match := re.FindStringSubmatch("/usr/local/sbin/emhttp &")
+	err, secure, port := lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if secure || port != "80" {
+		t.Errorf("Secure != false(%t) - Port != 80(%s)", secure, port)
+	}
+
+	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 88 &")
+	err, secure, port = lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if secure || port != "88" {
+		t.Errorf("Secure != false(%t) - Port != 88(%s)", secure, port)
+	}
+
+	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p ,448 &")
+	err, secure, port = lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if !secure || port != "448" {
+		t.Errorf("Secure != true(%t) - Port != 448(%s)", secure, port)
+	}
+
+	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 87,445 -r &")
+	err, secure, port = lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if !secure || port != "445" {
+		t.Errorf("Secure != true(%t) - Port != 445(%s)", secure, port)
+	}
+
+	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -rp 87,445 &")
+	err, secure, port = lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if !secure || port != "445" {
+		t.Errorf("Secure != true(%t) - Port != 445(%s)", secure, port)
+	}
+
+	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 89,447 &")
+	err, secure, port = lib.GetPort(match)
+	if err != nil {
+		t.Errorf("Failed: %s", err)
+	}
+	if secure || port != "89" {
+		t.Errorf("Secure != false(%t) - Port != 89(%s)", secure, port)
 	}
 }

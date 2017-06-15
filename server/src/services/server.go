@@ -4,30 +4,33 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/jbrodriguez/mlog"
-	"github.com/jbrodriguez/pubsub"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
-	mw "github.com/labstack/echo/middleware"
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	// "jbrodriguez/controlr/plugin/src/server/model"
-	"golang.org/x/net/websocket"
-	"jbrodriguez/controlr/plugin/server/src/net"
-	// "os"
-	"github.com/tredoe/osutil/user/crypt"
-	"github.com/tredoe/osutil/user/crypt/md5_crypt"
-	"github.com/tredoe/osutil/user/crypt/sha256_crypt"
-	"github.com/tredoe/osutil/user/crypt/sha512_crypt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path/filepath"
 	// "path/filepath"
 	"regexp"
 	// "strconv"
 	"time"
+
+	"jbrodriguez/controlr/plugin/server/src/dto"
+	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/net"
+	// "jbrodriguez/controlr/plugin/src/server/model"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/jbrodriguez/actor"
+	"github.com/jbrodriguez/mlog"
+	"github.com/jbrodriguez/pubsub"
+	"github.com/labstack/echo"
+	mw "github.com/labstack/echo/middleware"
+	"github.com/tredoe/osutil/user/crypt"
+	"github.com/tredoe/osutil/user/crypt/md5_crypt"
+	"github.com/tredoe/osutil/user/crypt/sha256_crypt"
+	"github.com/tredoe/osutil/user/crypt/sha512_crypt"
+
+	"golang.org/x/net/websocket"
 )
 
 const (
@@ -37,13 +40,11 @@ const (
 
 // Server type
 type Server struct {
-	Service
-
 	bus      *pubsub.PubSub
 	settings *lib.Settings
 
-	engine  *echo.Echo
-	mailbox chan *pubsub.Mailbox
+	engine *echo.Echo
+	actor  *actor.Actor
 
 	pool   map[uint64]*net.Connection
 	data   map[string]string
@@ -57,10 +58,10 @@ func NewServer(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 	server := &Server{
 		bus:      bus,
 		settings: settings,
+		actor:    actor.NewActor(bus),
 		pool:     make(map[uint64]*net.Connection),
 		data:     data,
 	}
-	server.init()
 	return server
 }
 
@@ -89,7 +90,7 @@ func (s *Server) Start() {
 	mlog.Info("Serving files from %s", location)
 
 	// create JWT secret
-	h := sha256.Sum256([]byte(s.data["gateway"] + s.data["name"] + s.data["timezone"] + s.data["version"]))
+	h := sha256.Sum256([]byte(s.data["name"] + s.data["timezone"] + s.data["version"] + s.data["csrf_token"]))
 	s.secret = base64.StdEncoding.EncodeToString(h[:])
 
 	targetURL, _ := url.Parse(s.data["backend"])
@@ -99,33 +100,40 @@ func (s *Server) Start() {
 
 	s.engine.Use(mw.Logger())
 	s.engine.Use(mw.Recover())
-	s.engine.Use(mw.StaticWithConfig(mw.StaticConfig{
-		Root:  location,
-		HTML5: true,
-	}))
+	// s.engine.Use(mw.StaticWithConfig(mw.StaticConfig{
+	// 	// Root:  location,
+	// 	HTML5: true,
+	// }))
 
 	// s.engine.Static("/", filepath.Join(location, "index.html"))
+	s.engine.Static("/", filepath.Join(location, "index.html"))
+	s.engine.Static("/img", filepath.Join(location, "img"))
+	s.engine.Static("/app", filepath.Join(location, "app"))
 
-	s.engine.Get("/version", s.getVersion)
-	s.engine.Post("/login", s.login)
+	s.engine.GET("/version", s.getVersion)
+	s.engine.POST("/login", s.login)
 
-	s.engine.Get("/state/plugins/*", s.proxyHandler)
-	s.engine.Get("/plugins/*", s.proxyHandler)
+	s.engine.GET("/state/plugins/*", s.proxyHandler)
+	s.engine.GET("/plugins/*", s.proxyHandler)
 
 	r := s.engine.Group("/skt")
 	r.Use(mw.JWTWithConfig(mw.JWTConfig{
 		SigningKey:  []byte(s.secret),
 		TokenLookup: "query:token",
 	}))
-	r.Get("/", s.handleWs)
+	r.GET("/", s.handleWs)
 
-	s.mailbox = s.register(s.bus, "socket:broadcast", s.broadcast)
-	go s.react()
+	s.actor.Register("socket:broadcast", s.broadcast)
+	go s.actor.React()
 
 	port := fmt.Sprintf(":%s", s.settings.Port)
-	go s.engine.Run(standard.New(port))
+	go s.engine.Start(port)
 
-	mlog.Info("Server started listening on %s", port)
+	sport := fmt.Sprintf(":%s", s.settings.SPort)
+	go s.engine.StartTLS(sport, filepath.Join(s.settings.CertDir, "cert.pem"), filepath.Join(s.settings.CertDir, "key.pem"))
+
+	mlog.Info("Server started listening http on %s", port)
+	mlog.Info("Server started listening https on %s", sport)
 }
 
 // Stop service
@@ -133,15 +141,8 @@ func (s *Server) Stop() {
 	mlog.Info("stopped service Server ...")
 }
 
-func (s *Server) react() {
-	for mbox := range s.mailbox {
-		s.dispatch(mbox.Topic, mbox.Content)
-	}
-}
-
 func (s *Server) getVersion(c echo.Context) error {
-	c.JSON(http.StatusOK, map[string]string{"version": s.settings.Version})
-	return nil
+	return c.JSON(http.StatusOK, map[string]string{"version": s.settings.Version})
 }
 
 func (s *Server) login(c echo.Context) error {
@@ -222,21 +223,15 @@ func (s *Server) login(c echo.Context) error {
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte(s.secret))
 	if err != nil {
-		return err
+		return c.JSON(http.StatusUnauthorized, map[string]string{"token": fmt.Sprintf("%s", err)})
 	}
 
-	c.JSON(http.StatusOK, map[string]string{"token": t})
-
-	return nil
+	return c.JSON(http.StatusOK, map[string]string{"token": t})
 }
 
 // WEBSOCKET handler
 func (s *Server) handleWs(c echo.Context) (err error) {
-	req := c.Request().(*standard.Request).Request
-	res := c.Response().(*standard.Response).ResponseWriter
-
 	websocket.Handler(func(ws *websocket.Conn) {
-
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(jwt.MapClaims)
 		id := uint64(claims["id"].(float64))
@@ -245,9 +240,9 @@ func (s *Server) handleWs(c echo.Context) (err error) {
 		s.pool[id] = conn
 		conn.Read()
 
-	}).ServeHTTP(res, req)
+	}).ServeHTTP(c.Response(), c.Request())
 
-	return
+	return nil
 }
 
 func (s *Server) onMessage(packet *dto.Packet) {
@@ -270,10 +265,6 @@ func (s *Server) broadcast(msg *pubsub.Message) {
 
 // PROXY for images
 func (s *Server) proxyHandler(c echo.Context) (err error) {
-	r := c.Request().(*standard.Request).Request
-	w := c.Response().(*standard.Response).ResponseWriter
-
-	s.proxy.ServeHTTP(w, r)
-
-	return
+	s.proxy.ServeHTTP(c.Response(), c.Request())
+	return nil
 }

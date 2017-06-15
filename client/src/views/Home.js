@@ -8,7 +8,7 @@ import styles from '../styles/core.scss'
 const cx = classNames.bind(styles)
 const banner = require('../img/iphone-hand.png')
 
-export const Home = observer(({ store }) => (
+export const Home = observer(({ store }) =>
 	<div>
 		<section className={cx('row')}>
 			<div className={cx('col-xs-12', 'center-xs')}>
@@ -21,5 +21,5 @@ export const Home = observer(({ store }) => (
 				<img src={banner} alt="ControlR" />
 			</div>
 		</section>
-	</div>
-))
+	</div>,
+)

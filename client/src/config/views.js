@@ -1,9 +1,9 @@
 import React from 'react'
 
-//models
-import {Route} from 'mobx-router'
+// models
+import { Route } from 'mobx-router'
 
-//components
+// components
 import { Home } from '../views/Home'
 import { Perms } from '../views/Perms'
 
@@ -20,8 +20,8 @@ const views = {
 		},
 		onEnter: (route, params, store) => {
 			store.app.start()
-		}
-	})
+		},
+	}),
 }
 
 export default views

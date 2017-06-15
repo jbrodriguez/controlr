@@ -1,3 +1,30 @@
+Version 2.0.0 - 2017-06-15
+- Implement updated actor architecture
+- Upgrade packages
+- Adjust for new echo api
+- Add missing function call
+- Improve port detection
+- Modify jwt secret generation
+- Set proper api endpoint
+- Add https ports to settings
+- Remove middleware usage
+- Fix api responses
+- Auto Generate TLS certificates
+- Add/Update packages
+- Add eslint configuration
+- Lint code
+- Add config prettier package
+- Add flag handling pckage
+- Adjust port detection logic for 6.4-rc3 new api
+- Return error if port detection fails
+- Fix port detection logic
+- Add test for new port detection logic
+- Remove log package usage
+- Remove line breaks
+- Add logging info
+- Rename variable
+
+
 Version 1.2.3 - 2017-03-20
 - Fix bundle script
 
