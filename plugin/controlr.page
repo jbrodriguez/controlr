@@ -7,10 +7,12 @@ $sName = "controlr";
 $controlr_cfg = parse_plugin_cfg("controlr");
 $controlr_service = isset($controlr_cfg['SERVICE']) ? $controlr_cfg['SERVICE'] 	: "disable";
 $controlr_port = (isset($controlr_cfg['PORT']) && is_numeric($controlr_cfg['PORT']) && $controlr_cfg['PORT'] > 0 && $controlr_cfg['PORT'] < 65535 ) ? $controlr_cfg['PORT'] : "2378";
+$controlr_sport = (isset($controlr_cfg['SPORT']) && is_numeric($controlr_cfg['SPORT']) && $controlr_cfg['SPORT'] > 0 && $controlr_cfg['SPORT'] < 65535 ) ? $controlr_cfg['SPORT'] : "2379";
 $controlr_running = shell_exec("pidof controlr | wc -w");
 $controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION");
 $controlr_version = ($controlr_running == 1) ?
-	"<a style='color:green;' target='_blank' href='http://".$var['IPADDR'].":".$controlr_port."' title='ControlR plugin'><b>Open Web UI ( v$controlr_version)</b></a>":
+	"<a style='color:green;' target='_blank' href='http://".$var['NAME'].".local:".$controlr_port."' title='ControlR plugin'><b>Open http Web UI ( v$controlr_version)</b></a><br/>
+	<a style='color:green;' target='_blank' href='https://".$var['NAME'].".local:".$controlr_sport."' title='ControlR plugin'><b>Open https Web UI ( v$controlr_version)</b></a>":
 	"<b><font style='color:orange;'>ControlR v$controlr_version</font></b>";
 ?>
 
@@ -26,8 +28,11 @@ Enable ControlR Server :
   <?=mk_option($controlr_service, "enable", "Yes");?>
   </select>
 
-Port:
+Port (http):
 : <input id="PORT" type="text" class="stopped" name="PORT" maxlength="40" value="<?=$controlr_port;?>" title="port must be 0-65535" placeholder="Default Port is 2378" >
+
+Secure Port (https):
+: <input id="SPORT" type="text" class="stopped" name="SPORT" maxlength="40" value="<?=$controlr_sport;?>" title="port must be 0-65535" placeholder="Default Port is 2379" >
 
 <input id="DEFAULT" class="stopped" type="submit" value="Default" onClick="resetDATA(this.form)">
 : <input id="btnApply" type="submit" value="Apply" onClick="verifyDATA(this.form)"><input type="button" value="Done" onClick="done()">
@@ -41,6 +46,7 @@ $(function(){
 
 function resetDATA(form) {
 	form.PORT.value = "2378";
+	form.SPORT.value = "2379";
 }
 
 function checkRUNNING(form) {
@@ -68,8 +74,17 @@ function verifyDATA(form) {
 		form.PORT.value = "2378";
 	}
 
+	if (isNumber(form.SPORT.value)){
+		if (form.SPORT.value < 0 || form.SPORT.value > 65535){
+			form.SPORT.value = "2379";
+		}
+	} else {
+		form.SPORT.value = "2379";
+	}
+
 	form.SERVICE.value = form.SERVICE.value.replace(/ /g,"_");
 	form.PORT.value = form.PORT.value.replace(/ /g,"_");
+	form.SPORT.value = form.PORT.value.replace(/ /g,"_");
 }
 
 </script>
