@@ -89,7 +89,8 @@ export default class Store {
 	}
 
 	@action('start') start = _ => {
-		this.socket = new Socket(`ws://${document.location.host}/skt/?token=${this.token}`, this.load)
+		const proto = document.location.protocol === 'https' ? 'wss' : 'ws'
+		this.socket = new Socket(`${proto}://${document.location.host}/skt/?token=${this.token}`, this.load)
 		this.socket.register('model/REFRESHED', this.refreshed)
 		this.socket.register('model/USER_UPDATED', this.userUpdated)
 		this.socket.register('model/ACCESS_ERROR', this.accessError)

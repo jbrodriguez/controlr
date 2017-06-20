@@ -126,14 +126,15 @@ func (s *Server) Start() {
 	s.actor.Register("socket:broadcast", s.broadcast)
 	go s.actor.React()
 
-	port := fmt.Sprintf(":%s", s.settings.Port)
-	go s.engine.Start(port)
-
-	sport := fmt.Sprintf(":%s", s.settings.SPort)
-	go s.engine.StartTLS(sport, filepath.Join(s.settings.CertDir, "cert.pem"), filepath.Join(s.settings.CertDir, "key.pem"))
-
-	mlog.Info("Server started listening http on %s", port)
-	mlog.Info("Server started listening https on %s", sport)
+	if s.data["protocol"] == "https" {
+		sport := fmt.Sprintf(":%s", s.settings.SPort)
+		go s.engine.StartTLS(sport, filepath.Join(s.settings.CertDir, "cert.pem"), filepath.Join(s.settings.CertDir, "key.pem"))
+		mlog.Info("Server started listening https on %s", sport)
+	} else {
+		port := fmt.Sprintf(":%s", s.settings.Port)
+		go s.engine.Start(port)
+		mlog.Info("Server started listening http on %s", port)
+	}
 }
 
 // Stop service

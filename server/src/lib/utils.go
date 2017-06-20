@@ -189,13 +189,9 @@ func GetPort(match []string) (error, bool, string) {
 		}
 	} else {
 		if https != "" {
-			if http == "" {
-				// emhttp -p ,<n> variant
-				return nil, true, https
-			} else {
-				// emhttp -p <m>,<n> variant
-				return nil, false, http
-			}
+			// emhttp -p ,<n> variant and
+			// emhttp -p <m>,<n> variant
+			return nil, true, https
 		}
 	}
 
