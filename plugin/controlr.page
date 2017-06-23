@@ -9,34 +9,24 @@ $controlr_service = isset($controlr_cfg['SERVICE']) ? $controlr_cfg['SERVICE'] 	
 $controlr_port = (isset($controlr_cfg['PORT']) && is_numeric($controlr_cfg['PORT']) && $controlr_cfg['PORT'] > 0 && $controlr_cfg['PORT'] < 65535 ) ? $controlr_cfg['PORT'] : "2378";
 $controlr_sport = (isset($controlr_cfg['SPORT']) && is_numeric($controlr_cfg['SPORT']) && $controlr_cfg['SPORT'] > 0 && $controlr_cfg['SPORT'] < 65535 ) ? $controlr_cfg['SPORT'] : "2379";
 $controlr_running = shell_exec("pidof controlr | wc -w");
-$controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION");
-
-$re = '/(.*)?:\d+/';
-$host = $_SERVER['HTTP_HOST'];
-if (preg_match($re, $host, $matches)) {
-  $host = $matches[1];
-}
-
-$isSecure = false;
-if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-    $isSecure = true;
-}
-elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
-    $isSecure = true;
-}
-
-$controlr_version = ($controlr_running == 1) ?
-	($isSecure) ? 
-	"<a style='color:green;' target='_blank' href='https://".$host.":".$controlr_sport."' title='ControlR plugin'><b>Open https Web UI ( v$controlr_version)</b></a><br/>" :
-	"<a style='color:green;' target='_blank' href='http://".$host.":".$controlr_port."' title='ControlR plugin'><b>Open http Web UI ( v$controlr_version)</b></a><br/>" :
-	"<b><font style='color:orange;'>ControlR v$controlr_version</font></b><br/>";
+$controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION | tr '\n' ' '");
 ?>
+
+<script type="text/javascript">
+	var port = document.location.protocol === 'http:' ? <?=$controlr_port;?> : <?=$controlr_sport;?>;
+	var url = document.location.protocol + '//' + document.location.hostname + ':' + port + '/';
+	var isRunning = <?=$controlr_running;?> === 1;
+	var version = '<?=$controlr_version;?>';
+	if (isRunning) {
+		document.write("<a style='color:green;' target='_blank' href='" + url + "' title='ControlR plugin'><b>Open Web UI ( v" + version + ")</b></a>");
+	} else {
+		document.write("<b><font style='color:orange;'>ControlR v" + version + "</font></b>")
+	}
+</script>
 
 <form markdown="1" name="controlr_settings" method="POST" action="/update.php" target="progressFrame">
 <input type="hidden" name="#file" value="controlr/controlr.cfg" />
 <input type="hidden" id="command" name="#command" value="" />
-
-<p><?=$controlr_version;?></p>
 
 Enable ControlR Server :
 : <select id="SERVICE" name="SERVICE" size="1" onChange="checkRUNNING(this.form);">
