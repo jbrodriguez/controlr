@@ -40,7 +40,8 @@ export default class Store {
 		)
 	}
 
-	@action('login') login = (authParams, callback) => {
+	@action('login')
+	login = (authParams, callback) => {
 		this.isLoading = true
 
 		this.api
@@ -75,7 +76,8 @@ export default class Store {
 			)
 	}
 
-	@action('logout') logout = _ => {
+	@action('logout')
+	logout = _ => {
 		this.isLoading = false
 		this.isBusy = false
 		this.isAuthorized = false
@@ -83,25 +85,29 @@ export default class Store {
 		this.token = ''
 	}
 
-	@action('removeFeedback') removeFeedback = _ => {
+	@action('removeFeedback')
+	removeFeedback = _ => {
 		this.hasError = false
 		this.error = {}
 	}
 
-	@action('start') start = _ => {
-		const proto = document.location.protocol === 'https' ? 'wss' : 'ws'
+	@action('start')
+	start = _ => {
+		const proto = document.location.protocol === 'https:' ? 'wss' : 'ws'
 		this.socket = new Socket(`${proto}://${document.location.host}/skt/?token=${this.token}`, this.load)
 		this.socket.register('model/REFRESHED', this.refreshed)
 		this.socket.register('model/USER_UPDATED', this.userUpdated)
 		this.socket.register('model/ACCESS_ERROR', this.accessError)
 	}
 
-	@action('load') load = _ => {
+	@action('load')
+	load = _ => {
 		this.isBusy = true
 		this.socket.send('model/REFRESH')
 	}
 
-	@action('model/REFRESHED') refreshed = payload => {
+	@action('model/REFRESHED')
+	refreshed = payload => {
 		this.users = payload.users.map(user => new User(user.idx, user.name, user.desc))
 		this.apps = payload.apps.map(app => new App(app.name, app.type, app.logo, app.id))
 
@@ -116,7 +122,8 @@ export default class Store {
 		this.isBusy = false
 	}
 
-	@action('selectUser') selectUser = name => {
+	@action('selectUser')
+	selectUser = name => {
 		const user = this.users.find(user => user.name === name)
 		const perms = this.parsePerms(user.desc)
 
@@ -127,7 +134,8 @@ export default class Store {
 		this.selectedUser = name
 	}
 
-	@action('setPerm') setPerm = (id, perm) => {
+	@action('setPerm')
+	setPerm = (id, perm) => {
 		const user = this.users.find(user => user.name === this.selectedUser)
 		if (!user) {
 			return
@@ -147,12 +155,14 @@ export default class Store {
 		this.socket.send('model/UPDATE_USER', { idx: user.idx, name: user.name, perms })
 	}
 
-	@action('model/USER_UPDATED') userUpdated = payload => {
+	@action('model/USER_UPDATED')
+	userUpdated = payload => {
 		this.isBusy = false
 		this.load()
 	}
 
-	@action('model/ACCESS_ERROR') accessError = payload => {
+	@action('model/ACCESS_ERROR')
+	accessError = payload => {
 		this.isLoading = false
 		this.isBusy = false
 
