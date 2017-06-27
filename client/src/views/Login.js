@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import { PropTypes } from 'prop-types'
 
 import { observable, action } from 'mobx'
-import { observer } from 'mobx-react'
+import { inject, observer } from 'mobx-react'
 import classNames from 'classnames/bind'
 
 import styles from '../styles/core.scss'
@@ -10,7 +10,8 @@ import views from '../config/views'
 
 const cx = classNames.bind(styles)
 
-@observer(['store'])
+@inject('store')
+@observer
 export default class Login extends PureComponent {
 	@observable username = 'root'
 	@observable password = ''
@@ -35,11 +36,13 @@ export default class Login extends PureComponent {
 		)
 	}
 
-	@action('setUsername') setUsername = e => {
+	@action('setUsername')
+	setUsername = e => {
 		this.username = e.target.value
 	}
 
-	@action('setPassword') setPassword = e => {
+	@action('setPassword')
+	setPassword = e => {
 		this.password = e.target.value
 	}
 

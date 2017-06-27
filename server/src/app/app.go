@@ -141,7 +141,7 @@ func (a *App) getUnraidInfo(location string) map[string]string {
 	}
 
 	cat := exec.Command("cat", "/boot/config/go")
-	grep := exec.Command("grep", "emhttp")
+	grep := exec.Command("grep", "^/usr/local/sbin/emhttp")
 
 	// Run the pipeline
 	output, stderr, err := lib.Pipeline(cat, grep)

@@ -1,14 +1,15 @@
 import React, { PureComponent } from 'react'
 import { PropTypes } from 'prop-types'
 
-import { observer } from 'mobx-react'
+import { inject, observer } from 'mobx-react'
 import classNames from 'classnames/bind'
 
 import styles from '../styles/core.scss'
 
 const cx = classNames.bind(styles)
 
-@observer(['store'])
+@inject('store')
+@observer
 class App extends PureComponent {
 	static propTypes = {
 		store: PropTypes.object,
@@ -53,43 +54,46 @@ class App extends PureComponent {
 	}
 }
 
-export const Apps = observer(['store'], ({ store }) => {
-	const apps = store.app.getApps()
-	const hasApps = store.app.hasApps
+export const Apps = inject('store')(
+	observer(({ store }) => {
+		const apps = store.app.getApps()
+		const hasApps = store.app.hasApps
 
-	return (
-		<section className={cx('row', 'middle-xs')}>
-			<div className={cx('col-xs-12', 'ttu')}>
-				<h2>Apps</h2>
-			</div>
-
-			<div className={cx('col-xs-12')}>
-				<div>
-					<strong>VISIBLE: </strong><span>If turned off, the docker/vm will not appear in the app</span><br />
-					<strong>READ: </strong><span>User can see the docker/vm, but actions are disabled</span><br />
-					<strong>WRITE: </strong><span>User can edit/remove the docker/vm</span><br />
-					<strong>EXECUTE: </strong><span>User can start/stop the docker/vm</span>
+		return (
+			<section className={cx('row', 'middle-xs')}>
+				<div className={cx('col-xs-12', 'ttu')}>
+					<h2>Apps</h2>
 				</div>
-			</div>
 
-			<div className={cx('col-xs-12')}>
-				{!hasApps
-					? <div>No dockers/vms are available</div>
-					: <table>
-							<thead>
-								<tr>
-									<th className={cx('tl')} style={{ width: '500px' }}>APP</th>
-									<th className={cx('tc')} style={{ width: '150px' }}>VISIBLE</th>
-									<th className={cx('tc')} style={{ width: '150px' }}>READ</th>
-									<th className={cx('tc')} style={{ width: '150px' }}>WRITE</th>
-									<th className={cx('tc')} style={{ width: '150px' }}>EXEC</th>
-								</tr>
-							</thead>
-							<tbody>
-								{apps.map(app => <App key={app.id} app={app} />)}
-							</tbody>
-						</table>}
-			</div>
-		</section>
-	)
-})
+				<div className={cx('col-xs-12')}>
+					<div>
+						<strong>VISIBLE: </strong><span>If turned off, the docker/vm will not appear in the app</span>
+						<br />
+						<strong>READ: </strong><span>User can see the docker/vm, but actions are disabled</span><br />
+						<strong>WRITE: </strong><span>User can edit/remove the docker/vm</span><br />
+						<strong>EXECUTE: </strong><span>User can start/stop the docker/vm</span>
+					</div>
+				</div>
+
+				<div className={cx('col-xs-12')}>
+					{!hasApps
+						? <div>No dockers/vms are available</div>
+						: <table>
+								<thead>
+									<tr>
+										<th className={cx('tl')} style={{ width: '500px' }}>APP</th>
+										<th className={cx('tc')} style={{ width: '150px' }}>VISIBLE</th>
+										<th className={cx('tc')} style={{ width: '150px' }}>READ</th>
+										<th className={cx('tc')} style={{ width: '150px' }}>WRITE</th>
+										<th className={cx('tc')} style={{ width: '150px' }}>EXEC</th>
+									</tr>
+								</thead>
+								<tbody>
+									{apps.map(app => <App key={app.id} app={app} />)}
+								</tbody>
+							</table>}
+				</div>
+			</section>
+		)
+	}),
+)

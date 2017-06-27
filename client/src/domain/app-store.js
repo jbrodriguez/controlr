@@ -167,7 +167,7 @@ export default class Store {
 		this.isBusy = false
 
 		this.hasError = true
-		this.error = payload.error
+		this.error = payload
 	}
 
 	@computed

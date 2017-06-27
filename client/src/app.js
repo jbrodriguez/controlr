@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import { PropTypes } from 'prop-types'
 
 import { useStrict } from 'mobx'
-import { observer } from 'mobx-react'
+import { inject, observer } from 'mobx-react'
 import { MobxRouter } from 'mobx-router'
 import DevTools from 'mobx-react-devtools'
 import classNames from 'classnames/bind'
@@ -25,7 +25,8 @@ const logo = require('./img/jbrio.png')
 const apple = require('./img/appstore.png')
 const google = require('./img/gbadge.png')
 
-@observer(['store'])
+@inject('store')
+@observer
 export default class App extends PureComponent {
 	static propTypes = {
 		store: PropTypes.object,

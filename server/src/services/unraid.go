@@ -1,7 +1,7 @@
 package services
 
 import (
-	// "encoding/base64"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,11 +12,9 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/ddliu/go-httpclient"
 	"github.com/jbrodriguez/actor"
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
-	// "github.com/vaughan0/go-ini"
 
 	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
@@ -43,7 +41,6 @@ func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 		bus:      bus,
 		settings: settings,
 		actor:    actor.NewActor(bus),
-		client:   &http.Client{Timeout: time.Second * 10},
 		data:     data,
 		manager:  specific.NewManager(data["version"]),
 		logLocation: map[string]string{
@@ -52,6 +49,11 @@ func NewUnraid(bus *pubsub.PubSub, settings *lib.Settings, data map[string]strin
 			"vm":     "/var/log/libvirt/libvirtd.log",
 		},
 	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	unraid.client = &http.Client{Timeout: time.Second * 10, Transport: tr}
 
 	return unraid
 }

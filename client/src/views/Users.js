@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import { PropTypes } from 'prop-types'
 
-import { observer } from 'mobx-react'
+import { inject, observer } from 'mobx-react'
 import classNames from 'classnames/bind'
 
 import styles from '../styles/core.scss'
@@ -9,7 +9,8 @@ import { Button } from './Button'
 
 const cx = classNames.bind(styles)
 
-@observer(['store'])
+@inject('store')
+@observer
 export class Users extends PureComponent {
 	static propTypes = {
 		store: PropTypes.object,

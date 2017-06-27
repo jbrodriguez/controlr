@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -9,15 +10,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	// "path/filepath"
 	"regexp"
-	// "strconv"
+	"strings"
 	"time"
 
 	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
 	"jbrodriguez/controlr/plugin/server/src/net"
-	// "jbrodriguez/controlr/plugin/src/server/model"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jbrodriguez/actor"
@@ -94,7 +93,6 @@ func (s *Server) Start() {
 	s.secret = base64.StdEncoding.EncodeToString(h[:])
 
 	targetURL, _ := url.Parse(s.data["backend"])
-	s.proxy = httputil.NewSingleHostReverseProxy(targetURL)
 
 	s.engine = echo.New()
 
@@ -127,10 +125,12 @@ func (s *Server) Start() {
 	go s.actor.React()
 
 	if s.data["protocol"] == "https" {
+		s.proxy = CreateReverseProxy(targetURL)
 		sport := fmt.Sprintf(":%s", s.settings.SPort)
 		go s.engine.StartTLS(sport, filepath.Join(s.settings.CertDir, "cert.pem"), filepath.Join(s.settings.CertDir, "key.pem"))
 		mlog.Info("Server started listening https on %s", sport)
 	} else {
+		s.proxy = httputil.NewSingleHostReverseProxy(targetURL)
 		port := fmt.Sprintf(":%s", s.settings.Port)
 		go s.engine.Start(port)
 		mlog.Info("Server started listening http on %s", port)
@@ -268,4 +268,42 @@ func (s *Server) broadcast(msg *pubsub.Message) {
 func (s *Server) proxyHandler(c echo.Context) (err error) {
 	s.proxy.ServeHTTP(c.Response(), c.Request())
 	return nil
+}
+
+func singleJoiningSlash(a, b string) string {
+	aslash := strings.HasSuffix(a, "/")
+	bslash := strings.HasPrefix(b, "/")
+	switch {
+	case aslash && bslash:
+		return a + b[1:]
+	case !aslash && !bslash:
+		return a + "/" + b
+	}
+	return a + b
+}
+
+func CreateReverseProxy(target *url.URL) *httputil.ReverseProxy {
+	targetQuery := target.RawQuery
+	director := func(req *http.Request) {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+		if _, ok := req.Header["User-Agent"]; !ok {
+			// explicitly disable User-Agent so it's not set to default value
+			req.Header.Set("User-Agent", "")
+		}
+	}
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	return &httputil.ReverseProxy{
+		Director:  director,
+		Transport: transport,
+	}
 }
