@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	// "jbrodriguez/controlr/plugin/server/src/dto"
+	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
 
 	"github.com/jbrodriguez/mlog"
@@ -81,6 +82,7 @@ func (p *Proxy) Start() {
 	r.GET("/debug", p.debugGet)
 	r.POST("/debug", p.debugPost)
 	r.GET("/mac", p.getMac)
+	r.GET("/prefs", p.getPrefs)
 
 	port := fmt.Sprintf(":%s", p.settings.ProxyPort)
 	go p.engine.Start(port)
@@ -131,6 +133,19 @@ func (p *Proxy) getMac(c echo.Context) (err error) {
 
 	reply := <-msg.Reply
 	resp := reply.(string)
+	// c.JSON(200, &resp)
+
+	return c.JSON(http.StatusOK, &resp)
+}
+
+func (p *Proxy) getPrefs(c echo.Context) (err error) {
+	mlog.Info("received /prefs")
+
+	msg := &pubsub.Message{Reply: make(chan interface{}, proxyCapacity)}
+	p.bus.Pub(msg, "api/GET_PREFS")
+
+	reply := <-msg.Reply
+	resp := reply.(dto.Prefs)
 	// c.JSON(200, &resp)
 
 	return c.JSON(http.StatusOK, &resp)

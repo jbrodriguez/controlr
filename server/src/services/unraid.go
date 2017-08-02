@@ -15,6 +15,7 @@ import (
 	"github.com/jbrodriguez/actor"
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
+	ini "github.com/vaughan0/go-ini"
 
 	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
@@ -66,6 +67,7 @@ func (u *Unraid) Start() (err error) {
 	u.actor.Register("model/UPDATE_USER", u.updateUser)
 	u.actor.Register("api/GET_LOG", u.getLog)
 	u.actor.Register("api/GET_MAC", u.getMac)
+	u.actor.Register("api/GET_PREFS", u.getPrefs)
 
 	go u.actor.React()
 
@@ -179,6 +181,35 @@ func (u *Unraid) getMac(msg *pubsub.Message) {
 	}
 
 	msg.Reply <- mac
+}
+
+func (u *Unraid) getPrefs(msg *pubsub.Message) {
+	prefs := dto.Prefs{
+		Number: ".,",
+		Unit:   "C",
+	}
+
+	iniPrefs := "/boot/config/plugins/dynamix/dynamix.cfg"
+
+	file, err := ini.LoadFile(iniPrefs)
+	if err != nil {
+		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
+		msg.Reply <- prefs
+		return
+	}
+
+	for key, value := range file["display"] {
+		if key == "number" {
+			prefs.Number = strings.Replace(value, "\"", "", -1)
+
+		}
+
+		if key == "unit" {
+			prefs.Unit = strings.Replace(value, "\"", "", -1)
+		}
+	}
+
+	msg.Reply <- prefs
 }
 
 func (u *Unraid) get(resource string) (string, error) {

@@ -1,3 +1,7 @@
+Version 2.2.0 - 2017-08-02
+- Implement GUI prefs lookup
+
+
 Version 2.1.0 - 2017-06-27
 - Fix issue with multiple emhttp invocations
 - Display error message
