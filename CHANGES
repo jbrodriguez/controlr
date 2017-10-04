@@ -1,3 +1,23 @@
+Version 2.3.0 - 2017-10-04
+- Restructure code architecture
+- Replace yarn with npm5
+- Fix template
+- Upgrade server packages
+- Allow testing
+- Hide echo banners
+- Upgrade node-sass/sass-loader
+- Fix CI instructions
+- Add explicit websocket dependency
+- Fix function signature1
+- Fix CI instructions
+- Hide labstack/echo banner
+- Fix protocol detection
+- Declare dto for info endpoint
+- Fold mac/prefs endpoints into info endpoint
+- Support unRAID 6.4.x (rc9q)
+- Restore legacy endpoints for compatibility
+
+
 Version 2.2.0 - 2017-08-02
 - Implement GUI prefs lookup
 

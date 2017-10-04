@@ -39,7 +39,7 @@ Get the ControlR bundle.
 <![CDATA[
 SERVICE="disable"
 PORT="2378"
-SPORT="2379"
+CERTDIR="/boot/config/ssl/certs"
 ]]>
 </INLINE>
 </FILE>
@@ -106,7 +106,7 @@ echo ""
 CFGFILE=/boot/config/plugins/controlr/controlr.cfg
 [ ! `cat "$CFGFILE" | grep SERVICE` ] && echo "SERVICE=\"disable\"" >> "$CFGFILE"
 [ ! `cat "$CFGFILE" | grep ^PORT` ] && echo "PORT=\"2378\"" >> "$CFGFILE"
-[ ! `cat "$CFGFILE" | grep ^SPORT` ] && echo "SPORT=\"2379\"" >> "$CFGFILE"
+[ ! `cat "$CFGFILE" | grep ^CERTDIR` ] && echo "CERTDIR=\"/boot/config/ssl/certs\"" >> "$CFGFILE"
 rm /tmp/controlr-chkconf
 ]]>
 </INLINE>

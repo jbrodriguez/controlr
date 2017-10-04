@@ -16,6 +16,7 @@ import (
 
 	"jbrodriguez/controlr/plugin/server/src/dto"
 	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/model"
 	"jbrodriguez/controlr/plugin/server/src/net"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -32,10 +33,10 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-const (
-	apiVersion = "/api/v1"
-	capacity   = 3
-)
+// const (
+// 	apiVersion = "/api/v1"
+// 	capacity   = 3
+// )
 
 // Server type
 type Server struct {
@@ -46,20 +47,20 @@ type Server struct {
 	actor  *actor.Actor
 
 	pool   map[uint64]*net.Connection
-	data   map[string]string
+	state  *model.State
 	secret string
 
 	proxy *httputil.ReverseProxy
 }
 
 // NewServer - constructor
-func NewServer(bus *pubsub.PubSub, settings *lib.Settings, data map[string]string) *Server {
+func NewServer(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *Server {
 	server := &Server{
 		bus:      bus,
 		settings: settings,
 		actor:    actor.NewActor(bus),
 		pool:     make(map[uint64]*net.Connection),
-		data:     data,
+		state:    state,
 	}
 	return server
 }
@@ -72,7 +73,6 @@ func (s *Server) Start() {
 
 	locations := []string{
 		"/usr/local/emhttp/plugins/controlr",
-		"/usr/local/share/controlr",
 		cwd,
 		s.settings.WebDir,
 	}
@@ -89,12 +89,12 @@ func (s *Server) Start() {
 	mlog.Info("Serving files from %s", location)
 
 	// create JWT secret
-	h := sha256.Sum256([]byte(s.data["name"] + s.data["timezone"] + s.data["version"] + s.data["csrf_token"]))
+	h := sha256.Sum256([]byte(s.state.Name + s.state.Timezone + s.state.Version + s.state.CsrfToken))
 	s.secret = base64.StdEncoding.EncodeToString(h[:])
 
-	targetURL, _ := url.Parse(s.data["backend"])
-
 	s.engine = echo.New()
+
+	s.engine.HideBanner = true
 
 	s.engine.Use(mw.Logger())
 	s.engine.Use(mw.Recover())
@@ -124,16 +124,30 @@ func (s *Server) Start() {
 	s.actor.Register("socket:broadcast", s.broadcast)
 	go s.actor.React()
 
-	if s.data["protocol"] == "https" {
+	targetURL, _ := url.Parse(s.state.Host)
+
+	if s.state.Secure {
 		s.proxy = CreateReverseProxy(targetURL)
-		sport := fmt.Sprintf(":%s", s.settings.SPort)
-		go s.engine.StartTLS(sport, filepath.Join(s.settings.CertDir, "cert.pem"), filepath.Join(s.settings.CertDir, "key.pem"))
-		mlog.Info("Server started listening https on %s", sport)
+
+		go func() {
+			err := s.engine.StartTLS(s.settings.Port, filepath.Join(s.settings.CertDir, "certificate_bundle.pem"), filepath.Join(s.settings.CertDir, "certificate_bundle.pem"))
+			if err != nil {
+				mlog.Fatalf("Unable to start https server: %s", err)
+			}
+		}()
+
+		mlog.Info("Server started listening https on %s", s.settings.Port)
 	} else {
 		s.proxy = httputil.NewSingleHostReverseProxy(targetURL)
-		port := fmt.Sprintf(":%s", s.settings.Port)
-		go s.engine.Start(port)
-		mlog.Info("Server started listening http on %s", port)
+
+		go func() {
+			err := s.engine.Start(s.settings.Port)
+			if err != nil {
+				mlog.Fatalf("Unable to start http server: %s", err)
+			}
+		}()
+
+		mlog.Info("Server started listening http on %s", s.settings.Port)
 	}
 }
 

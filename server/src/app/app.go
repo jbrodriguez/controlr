@@ -3,14 +3,13 @@ package app
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"syscall"
 
 	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/model"
 	"jbrodriguez/controlr/plugin/server/src/services"
 
 	"github.com/jbrodriguez/mlog"
@@ -66,40 +65,21 @@ func (a *App) Run(settings *lib.Settings) {
 
 	bus := pubsub.New(623)
 
-	data := a.getUnraidInfo(settings.APIDir)
-	if data == nil {
-		mlog.Fatalf("Unable to retrieve unRAID info. Exiting now ...")
-	}
-
-	mlog.Info("Connections to emhttp via %s:%s ...", data["protocol"], data["port"])
-
-	exists, err := lib.Exists(filepath.Join(settings.CertDir, "cert.pem"))
+	//
+	state, err := getUnraidInfo(settings.APIDir, settings.CertDir)
 	if err != nil {
-		mlog.Warning("Unable to check for certs presence: %s", err)
+		mlog.Fatalf("Unable to retrieve unRAID info (%s). Exiting now ...", err)
 	}
 
-	if !exists {
-		mlog.Info("No certs are available, generating ...")
-		err := lib.GenerateCerts(data["name"], settings.CertDir)
-		if err != nil {
-			mlog.Warning("Unable to generate certs: %s", err)
-		}
-	}
+	// mlog.Info("Connections to emhttp via %s:%s ...", data["protocol"], data["port"])
 
-	template := "%s://127.0.0.1%s/"
-	port := ""
-	if (data["protocol"] == "http" && data["port"] != "80") || (data["protocol"] == "https" && data["port"] != "443") {
-		port = ":" + data["port"]
-	}
-	data["backend"] = fmt.Sprintf(template, data["protocol"], port)
+	core := services.NewCore(bus, settings, state)
+	server := services.NewServer(bus, settings, state)
+	api := services.NewApi(bus, settings, state)
 
-	unraid := services.NewUnraid(bus, settings, data)
-	server := services.NewServer(bus, settings, data)
-	proxy := services.NewProxy(bus, settings, data)
-
-	unraid.Start()
+	core.Start()
 	server.Start()
-	proxy.Start()
+	api.Start()
 
 	mlog.Info("Press Ctrl+C to stop ...")
 
@@ -107,67 +87,119 @@ func (a *App) Run(settings *lib.Settings) {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 	mlog.Info("Received signal: (%s) ... shutting down the app now ...", <-c)
 
-	proxy.Stop()
+	api.Stop()
 	server.Stop()
-	unraid.Stop()
+	core.Stop()
 
 	mlog.Stop()
 }
 
-func (a *App) getUnraidInfo(location string) map[string]string {
-	var data map[string]string
-
-	file, err := ini.LoadFile(filepath.Join(location, "var.ini"))
+func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
+	file, err := ini.LoadFile(filepath.Join(apiDir, "var.ini"))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	data = make(map[string]string, 0)
+	secure, err := lib.Exists(filepath.Join(certDir, "certificate_bundle.pem"))
+	if err != nil {
+		return nil, err
+	}
 
-	tmp, _ := file.Get("", "NAME")
-	data["name"] = strings.Replace(tmp, "\"", "", -1)
+	state := &model.State{}
+
+	var tmp string
+	var ok bool
+
+	tmp, _ = file.Get("", "NAME")
+	state.Name = strings.Replace(tmp, "\"", "", -1)
 
 	tmp, _ = file.Get("", "timeZone")
-	data["timezone"] = strings.Replace(tmp, "\"", "", -1)
+	state.Timezone = strings.Replace(tmp, "\"", "", -1)
 
 	tmp, _ = file.Get("", "version")
-	data["version"] = strings.Replace(tmp, "\"", "", -1)
+	state.Version = strings.Replace(tmp, "\"", "", -1)
 
-	token, ok := file.Get("", "csrf_token")
+	tmp, ok = file.Get("", "csrf_token")
 	if !ok {
-		data["csrf_token"] = ""
+		state.CsrfToken = ""
 	} else {
-		data["csrf_token"] = strings.Replace(token, "\"", "", -1)
+		state.CsrfToken = strings.Replace(tmp, "\"", "", -1)
 	}
 
-	cat := exec.Command("cat", "/boot/config/go")
-	grep := exec.Command("grep", "^/usr/local/sbin/emhttp")
+	var usessl, port, portssl string
 
-	// Run the pipeline
-	output, stderr, err := lib.Pipeline(cat, grep)
-	if err != nil {
-		mlog.Warning("Failed to run commands to get emhttp port from config: %s\n", err)
+	// if the key is missing, usessl, port and portssl are set to ""
+	usessl, ok = file.Get("", "USE_SSL")
+	port, ok = file.Get("", "PORT")
+	portssl, ok = file.Get("", "PORTSSL")
+
+	// remove quotes from unRAID's ini file
+	usessl = strings.Replace(usessl, "\"", "", -1)
+	port = strings.Replace(port, "\"", "", -1)
+	portssl = strings.Replace(portssl, "\"", "", -1)
+
+	// if usessl == "" this isn't a 6.4.x server, try to read emhttpPort; if that doesn't work
+	// it will default to port 80
+	// otherwise usessl has some value, the plugin will serve off http if the value is no, in any
+	// other case, it will serve off https
+	if usessl == "" {
+		secure = false
+		port, ok = file.Get("", "emhttpPort")
+		port = strings.Replace(port, "\"", "", -1)
+	} else if usessl == "no" {
+		secure = false
 	}
 
-	// Print the stderr, if any
-	if len(stderr) > 0 {
-		mlog.Warning("Error while reading config (stderr): %s\n", stderr)
-	}
-
-	re := regexp.MustCompile(emhttpRe)
-	args := re.FindStringSubmatch(strings.Trim(string(output), "\n\r"))
-
-	err, secure, port := lib.GetPort(args)
-	if err != nil {
-		mlog.Warning("Unable to get emhttp port (using defaults now): %s", err)
-	}
+	state.Secure = secure
 
 	if secure {
-		data["protocol"] = "https"
-	} else {
-		data["protocol"] = "http"
-	}
-	data["port"] = port
+		if portssl == "" || portssl == "443" {
+			portssl = ""
+		} else {
+			portssl = ":" + portssl
+		}
 
-	return data
+		state.Host = fmt.Sprintf("https://127.0.0.1%s/", portssl)
+	} else {
+		if port == "" || port == "80" {
+			port = ""
+		} else {
+			port = ":" + port
+		}
+
+		state.Host = fmt.Sprintf("http://127.0.0.1%s/", port)
+	}
+
+	//
+
+	// cat := exec.Command("cat", "/boot/config/go")
+	// grep := exec.Command("grep", "^/usr/local/sbin/emhttp")
+
+	// // Run the pipeline
+	// output, stderr, err := lib.Pipeline(cat, grep)
+	// if err != nil {
+	// 	mlog.Warning("Failed to run commands to get emhttp port from config: %s\n", err)
+	// }
+
+	// // Print the stderr, if any
+	// if len(stderr) > 0 {
+	// 	mlog.Warning("Error while reading config (stderr): %s\n", stderr)
+	// }
+
+	// re := regexp.MustCompile(emhttpRe)
+	// args := re.FindStringSubmatch(strings.Trim(string(output), "\n\r"))
+
+	// err, secure, port := lib.GetPort(args)
+	// if err != nil {
+	// 	mlog.Warning("Unable to get emhttp port (using defaults now): %s", err)
+	// }
+
+	// if secure {
+	// 	data["protocol"] = "https"
+	// } else {
+	// 	data["protocol"] = "http"
+	// }
+	// data["port"] = port
+
+	return state, nil
 }
