@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/jbrodriguez/actor"
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
@@ -18,6 +19,8 @@ import (
 	"jbrodriguez/controlr/plugin/server/src/model"
 	"jbrodriguez/controlr/plugin/server/src/specific"
 )
+
+var iniPrefs string = "/boot/config/plugins/dynamix/dynamix.cfg"
 
 // Core service
 type Core struct {
@@ -31,6 +34,9 @@ type Core struct {
 
 	manager     specific.Manager
 	logLocation map[string]string
+
+	info    dto.Info
+	watcher *fsnotify.Watcher
 }
 
 // NewCore - constructor
@@ -67,6 +73,48 @@ func (c *Core) Start() (err error) {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 
+	wake := _getMac()
+	prefs, err := _getPrefs()
+	if err != nil {
+		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
+	}
+
+	c.info = dto.Info{
+		Wake:  wake,
+		Prefs: prefs,
+	}
+
+	c.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		mlog.Fatal(err)
+	}
+
+	go func() {
+		for {
+			select {
+			case event := <-c.watcher.Events:
+				mlog.Info("event: %s", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					mlog.Info("modified file: %s", event.Name)
+
+					prefs, err := _getPrefs()
+					if err != nil {
+						mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
+					}
+
+					c.info.Prefs = prefs
+				}
+			case err := <-c.watcher.Errors:
+				mlog.Warning("Error:", err)
+			}
+		}
+	}()
+
+	err = c.watcher.Add(iniPrefs)
+	if err != nil {
+		mlog.Fatal(err)
+	}
+
 	go c.actor.React()
 
 	return nil
@@ -74,6 +122,10 @@ func (c *Core) Start() (err error) {
 
 // Stop service
 func (c *Core) Stop() {
+	if c.watcher != nil {
+		c.watcher.Close()
+	}
+
 	mlog.Info("stopped service Core ...")
 }
 
@@ -169,20 +221,7 @@ func (c *Core) getLog(msg *pubsub.Message) {
 }
 
 func (c *Core) getInfo(msg *pubsub.Message) {
-
-	prefs, err := _getPrefs()
-	if err != nil {
-		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
-	}
-
-	wake := _getMac()
-
-	info := dto.Info{
-		Prefs: prefs,
-		Wake:  wake,
-	}
-
-	msg.Reply <- info
+	msg.Reply <- c.info
 }
 
 func (c *Core) getMac(msg *pubsub.Message) {
@@ -217,8 +256,6 @@ func _getMac() dto.Wake {
 
 	return wake
 }
-
-var iniPrefs string = "/boot/config/plugins/dynamix/dynamix.cfg"
 
 func _getPrefs() (dto.Prefs, error) {
 	prefs := dto.Prefs{

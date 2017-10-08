@@ -10,3 +10,5 @@ gom 'github.com/mcuadros/go-version', :commit => 'd52711f8d6bea8dc01efafdb68ad95
 gom 'github.com/tredoe/osutil/user/crypt', :commit => '7d3ee1afa71c90fd1514c8f557ae6c5f414208eb'
 gom 'github.com/jessevdk/go-flags', :tag => 'v1.3.0'
 gom 'golang.org/x/net/websocket'
+gom 'github.com/fsnotify/fsnotify', :tag => 'v1.4.2'
+gom 'golang.org/x/sys'
