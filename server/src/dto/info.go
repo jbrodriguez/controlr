@@ -1,19 +1,17 @@
 package dto
 
-// Wake -
-type Wake struct {
-	Mac       string `json:"mac"`
-	Broadcast string `json:"broadcast"`
-}
-
-// Prefs -
-type Prefs struct {
-	Number string `json:"number"`
-	Unit   string `json:"unit"`
-}
-
 // Info -
+// No version || version 0
+// Wake    Wake  `json:"wake"`
+// Prefs   Prefs `json:"prefs"`
+
+// Version 1
+// Previous +
+// Version int
+// Ups []Sample
 type Info struct {
-	Wake  Wake  `json:"wake"`
-	Prefs Prefs `json:"prefs"`
+	Version int      `json:"version"`
+	Wake    Wake     `json:"wake"`
+	Prefs   Prefs    `json:"prefs"`
+	Samples []Sample `json:"samples"`
 }

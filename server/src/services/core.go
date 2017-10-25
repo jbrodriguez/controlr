@@ -37,6 +37,8 @@ type Core struct {
 
 	info    dto.Info
 	watcher *fsnotify.Watcher
+
+	ups model.Ups
 }
 
 // NewCore - constructor
@@ -73,15 +75,34 @@ func (c *Core) Start() (err error) {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 
+	ups, err := model.IdentifyUps()
+	if err != nil {
+		mlog.Warning("Error identifying UPS: %s", err)
+		c.ups = model.NewNoUps()
+	} else {
+		switch ups {
+		case model.APC:
+			c.ups = model.NewApc()
+		case model.NUT:
+			c.ups = model.NewNut()
+		default:
+			c.ups = model.NewNoUps()
+			break
+		}
+	}
+
 	wake := _getMac()
 	prefs, err := _getPrefs()
 	if err != nil {
 		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
 	}
+	samples := c.ups.GetStatus()
 
 	c.info = dto.Info{
-		Wake:  wake,
-		Prefs: prefs,
+		Version: 1,
+		Wake:    wake,
+		Prefs:   prefs,
+		Samples: samples,
 	}
 
 	c.watcher, err = fsnotify.NewWatcher()
@@ -221,6 +242,7 @@ func (c *Core) getLog(msg *pubsub.Message) {
 }
 
 func (c *Core) getInfo(msg *pubsub.Message) {
+	c.info.Samples = c.ups.GetStatus()
 	msg.Reply <- c.info
 }
 

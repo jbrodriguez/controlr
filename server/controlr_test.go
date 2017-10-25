@@ -2,16 +2,26 @@ package main
 
 import (
 	"fmt"
-	"jbrodriguez/controlr/plugin/server/src/lib"
+	"jbrodriguez/controlr/plugin/server/src/dto"
+	"jbrodriguez/controlr/plugin/server/src/model"
+	"os"
+	"reflect"
 	"regexp"
 	"testing"
 
+	"github.com/jbrodriguez/mlog"
 	"github.com/kless/osutil/user/crypt"
 	"github.com/kless/osutil/user/crypt/md5_crypt"
 	"github.com/kless/osutil/user/crypt/sha256_crypt"
 	"github.com/kless/osutil/user/crypt/sha512_crypt"
 	"github.com/mcuadros/go-version"
 )
+
+func TestMain(m *testing.M) {
+	mlog.Start(mlog.LevelInfo, "")
+
+	os.Exit(m.Run())
+}
 
 // t.deepEqual(version_compare('6.2.0-beta1', '6.1.4', '>='), true, '6.2.0-beta1 not >= than 6.1.4')
 // t.deepEqual(version_compare('6.2.0-rc1', '6.2.0-beta1', '>='), true, '6.2.0-rc1  6.2.0-beta1')
@@ -130,60 +140,123 @@ func TestEncrypt(t *testing.T) {
 	}
 }
 
-func TestEmhttp(t *testing.T) {
-	re := regexp.MustCompile(`.*?emhttp(.*)$`)
+func TestApcUps(t *testing.T) {
+	lines := []string{
+		"APC      : 001,048,1105",
+		"DATE     : 2017-10-10 15:20:45 +0400",
+		"HOSTNAME : MediaOne",
+		"VERSION  : 3.14.14 (31 May 2016) slackware",
+		"UPSNAME  : UPS_IDEN",
+		"CABLE    : Custom Cable Smart",
+		"DRIVER   : APC Smart UPS (any)",
+		"UPSMODE  : Stand Alone",
+		"STARTTIME: 2017-10-07 09:37:15 +0400",
+		"MODEL    : Smart-UPS SC1500",
+		"STATUS   : ONLINE",
+		"LINEV    : 228.0 Volts",
+		"LOADPCT  : 9.1 Percent",
+		"BCHARGE  : 100.0 Percent",
+		"TIMELEFT : 85.0 Minutes",
+		"MBATTCHG : 10 Percent",
+		"MINTIMEL : 10 Minutes",
+		"MAXTIME  : 0 Seconds",
+		"MAXLINEV : 228.0 Volts",
+		"MINLINEV : 226.0 Volts",
+		"OUTPUTV  : 228.0 Volts",
+		"SENSE    : High",
+		"DWAKE    : 0 Seconds",
+		"DSHUTD   : 60 Seconds",
+		"DLOWBATT : 2 Minutes",
+		"LOTRANS  : 208.0 Volts",
+		"HITRANS  : 253.0 Volts",
+		"RETPCT   : 0.0 Percent",
+		"ALARMDEL : 5 Seconds",
+		"BATTV    : 26.8 Volts",
+		"LINEFREQ : 50.0 Hz",
+		"LASTXFER : Line voltage notch or spike",
+		"NUMXFERS : 0",
+		"TONBATT  : 0 Seconds",
+		"CUMONBATT: 0 Seconds",
+		"XOFFBATT : N/A",
+		"SELFTEST : NO",
+		"STESTI   : 336",
+		"STATFLAG : 0x05000008",
+		"REG1     : 0x00",
+		"REG2     : 0x00",
+		"REG3     : 0x00",
+		"MANDATE  : 04/16/12",
+		"SERIALNO : 5S1216T00762",
+		"BATTDATE : 04/16/12",
+		"NOMOUTV  : 230 Volts",
+		"NOMBATTV : 24.0 Volts",
+		"FIRMWARE : 738.3.I",
+		"END APC  : 2017-10-10 15:20:51 +0400",
+		"NOMPOWER : 865",
+	}
 
-	match := re.FindStringSubmatch("/usr/local/sbin/emhttp &")
-	err, secure, port := lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
-	}
-	if secure || port != "80" {
-		t.Errorf("Secure != false(%t) - Port != 80(%s)", secure, port)
-	}
-
-	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 88 &")
-	err, secure, port = lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
-	}
-	if secure || port != "88" {
-		t.Errorf("Secure != false(%t) - Port != 88(%s)", secure, port)
+	samplesExpected := []dto.Sample{
+		dto.Sample{Key: "UPS STATUS", Value: "Online", Unit: "", Condition: "green"},
+		dto.Sample{Key: "UPS LOAD", Value: "9.1", Unit: "%", Condition: "green"},
+		dto.Sample{Key: "UPS CHARGE", Value: "100.0", Unit: "%", Condition: "green"},
+		dto.Sample{Key: "UPS LEFT", Value: "85.0", Unit: "m", Condition: "green"},
+		dto.Sample{Key: "UPS POWER", Value: "78.7", Unit: "w", Condition: "green"},
 	}
 
-	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p ,448 &")
-	err, secure, port = lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
+	apc := model.NewApc()
+
+	samplesActual := apc.Parse(lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "apc", samplesExpected, samplesActual)
 	}
-	if !secure || port != "448" {
-		t.Errorf("Secure != true(%t) - Port != 448(%s)", secure, port)
+}
+
+func TestNutUps(t *testing.T) {
+	lines := []string{
+		"battery.charge: 100",
+		"battery.charge.low: 30",
+		"battery.runtime: 1000",
+		"battery.type: PbAc",
+		"device.mfr: MGE UPS SYSTEMS",
+		"device.model: Nova 1100 AVR",
+		"device.type: ups",
+		"driver.name: usbhid-ups",
+		"driver.parameter.pollfreq: 30",
+		"driver.parameter.pollinterval: 2",
+		"driver.parameter.port: auto",
+		"driver.parameter.synchronous: no",
+		"driver.version: 2.7.4.1",
+		"driver.version.data: MGE HID 1.42",
+		"driver.version.internal: 0.42",
+		"outlet.1.status: on",
+		"output.voltage: 230.0",
+		"ups.delay.shutdown: 20",
+		"ups.delay.start: 30",
+		"ups.load: 6",
+		"ups.mfr: MGE UPS SYSTEMS",
+		"ups.model: Nova 1100 AVR",
+		"ups.power.nominal: 1100",
+		"ups.realpower.nominal: 300",
+		"ups.productid: ffff",
+		"ups.status: OL",
+		"ups.timer.shutdown: -1",
+		"ups.timer.start: -10",
+		"ups.vendorid: 0463",
 	}
 
-	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 87,445 -r &")
-	err, secure, port = lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
-	}
-	if !secure || port != "445" {
-		t.Errorf("Secure != true(%t) - Port != 445(%s)", secure, port)
-	}
-
-	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -rp 87,445 &")
-	err, secure, port = lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
-	}
-	if !secure || port != "445" {
-		t.Errorf("Secure != true(%t) - Port != 445(%s)", secure, port)
+	samplesExpected := []dto.Sample{
+		dto.Sample{Key: "UPS CHARGE", Value: "100", Unit: "%", Condition: "green"},
+		dto.Sample{Key: "UPS LEFT", Value: "16.7", Unit: "m", Condition: "green"},
+		dto.Sample{Key: "UPS LOAD", Value: "6", Unit: "%", Condition: "green"},
+		dto.Sample{Key: "UPS STATUS", Value: "Online", Unit: "", Condition: "green"},
+		dto.Sample{Key: "UPS POWER", Value: "18.0", Unit: "w", Condition: "green"},
 	}
 
-	match = re.FindStringSubmatch("/usr/local/sbin/emhttp -p 89,447 &")
-	err, secure, port = lib.GetPort(match)
-	if err != nil {
-		t.Errorf("Failed: %s", err)
-	}
-	if secure || port != "89" {
-		t.Errorf("Secure != false(%t) - Port != 89(%s)", secure, port)
+	nut := model.NewNut()
+
+	samplesActual := nut.Parse(lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "nut", samplesExpected, samplesActual)
 	}
 }

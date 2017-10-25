@@ -1,3 +1,14 @@
+Version 2.5.0 - 2017-10-25
+- Split wake and prefs into their own files
+- Create samples data structure
+- Update info structure
+- Add shell invocation with command parameters
+- Implement UPS support
+- Add tests for ups parsing
+- Rename ups to samples in dto
+- Fix import path
+
+
 Version 2.4.0 - 2017-10-08
 - Optimize info endpoint
 - Switch to code to write release messages
