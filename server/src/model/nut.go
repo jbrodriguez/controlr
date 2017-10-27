@@ -14,8 +14,8 @@
 package model
 
 import (
+	"controlr/plugin/server/src/dto"
 	"fmt"
-	"jbrodriguez/controlr/plugin/server/src/dto"
 	"strconv"
 	"strings"
 
@@ -52,13 +52,17 @@ func NewNut() *Nut {
 		mlog.Warning("nuts: unable to parse config: (%s). Using defaults ...", nutConfig)
 	} else {
 		name, ok = file.Get("", "NAME")
-		if !ok {
+		if ok {
+			name = strings.Replace(name, "\"", "", -1)
+		} else {
 			name = "ups"
 			mlog.Warning("nuts: name not found. Defaulting to ups ...")
 		}
 
 		ip, ok = file.Get("", "IPADDR")
-		if !ok {
+		if ok {
+			ip = strings.Replace(ip, "\"", "", -1)
+		} else {
 			ip = "127.0.0.1"
 			mlog.Warning("nuts: ip not found. Defaulting to 127.0.0.1 ...")
 		}

@@ -13,7 +13,7 @@
 package model
 
 import (
-	"jbrodriguez/controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/dto"
 	"strconv"
 	"strings"
 )

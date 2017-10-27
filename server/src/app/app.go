@@ -8,9 +8,9 @@ import (
 	"strings"
 	"syscall"
 
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/model"
-	"jbrodriguez/controlr/plugin/server/src/services"
+	"controlr/plugin/server/src/lib"
+	"controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/services"
 
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"

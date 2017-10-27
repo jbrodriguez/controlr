@@ -1,8 +1,8 @@
 package model
 
 import (
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
+	"controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/lib"
 )
 
 type UpsKind int

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/lib"
+	"controlr/plugin/server/src/model"
 
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"

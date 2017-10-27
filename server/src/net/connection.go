@@ -1,8 +1,9 @@
 package net
 
 import (
+	"controlr/plugin/server/src/dto"
+
 	"golang.org/x/net/websocket"
-	"jbrodriguez/controlr/plugin/server/src/dto"
 )
 
 // MessageFunc - websocket handler

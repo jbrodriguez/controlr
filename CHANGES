@@ -1,3 +1,9 @@
+Version 2.5.1 - 2017-10-27
+- Change folder location
+- Fix CI script
+- Fix parsing of config file
+
+
 Version 2.5.0 - 2017-10-25
 - Split wake and prefs into their own files
 - Create samples data structure

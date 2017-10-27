@@ -1,6 +1,6 @@
 package model
 
-import "jbrodriguez/controlr/plugin/server/src/dto"
+import "controlr/plugin/server/src/dto"
 
 type NoUps struct {
 	samples []dto.Sample

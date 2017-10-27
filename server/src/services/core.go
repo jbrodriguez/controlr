@@ -14,10 +14,10 @@ import (
 	"github.com/jbrodriguez/pubsub"
 	ini "github.com/vaughan0/go-ini"
 
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/model"
-	"jbrodriguez/controlr/plugin/server/src/specific"
+	"controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/lib"
+	"controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/specific"
 )
 
 var iniPrefs string = "/boot/config/plugins/dynamix/dynamix.cfg"

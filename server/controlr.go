@@ -1,7 +1,7 @@
 package main
 
 import (
-	"jbrodriguez/controlr/plugin/server/src/app"
+	"controlr/plugin/server/src/app"
 	"log"
 	"os"
 )

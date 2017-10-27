@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/lib"
-	"jbrodriguez/controlr/plugin/server/src/model"
-	"jbrodriguez/controlr/plugin/server/src/net"
+	"controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/lib"
+	"controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/net"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jbrodriguez/actor"

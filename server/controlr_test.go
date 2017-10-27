@@ -1,9 +1,9 @@
 package main
 
 import (
+	"controlr/plugin/server/src/dto"
+	"controlr/plugin/server/src/model"
 	"fmt"
-	"jbrodriguez/controlr/plugin/server/src/dto"
-	"jbrodriguez/controlr/plugin/server/src/model"
 	"os"
 	"reflect"
 	"regexp"
