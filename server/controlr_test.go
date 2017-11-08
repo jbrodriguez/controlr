@@ -2,7 +2,8 @@ package main
 
 import (
 	"controlr/plugin/server/src/dto"
-	"controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/plugins/sensor"
+	"controlr/plugin/server/src/plugins/ups"
 	"fmt"
 	"os"
 	"reflect"
@@ -202,7 +203,7 @@ func TestApcUps(t *testing.T) {
 		dto.Sample{Key: "UPS POWER", Value: "78.7", Unit: "w", Condition: "green"},
 	}
 
-	apc := model.NewApc()
+	apc := ups.NewApc()
 
 	samplesActual := apc.Parse(lines)
 
@@ -252,11 +253,72 @@ func TestNutUps(t *testing.T) {
 		dto.Sample{Key: "UPS POWER", Value: "18.0", Unit: "w", Condition: "green"},
 	}
 
-	nut := model.NewNut()
+	nut := ups.NewNut()
 
 	samplesActual := nut.Parse(lines)
 
 	if !reflect.DeepEqual(samplesActual, samplesExpected) {
 		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "nut", samplesExpected, samplesActual)
 	}
+}
+
+func TestSystemSensor(t *testing.T) {
+	lines := []string{
+		"coretemp-isa-0000",
+		"MB Temp:      +47.0°C  (high = +79.0°C, crit = +85.0°C)",
+		"CPU Temp:     +46.0°C  (high = +79.0°C, crit = +85.0°C)",
+		"Core 1:       +46.0°C  (high = +79.0°C, crit = +85.0°C)",
+		"",
+		"nct6776-isa-0290",
+		"Vcore:         +0.87 V  (min =  +0.00 V, max =  +1.74 V)",
+		"in1:           +1.86 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"AVCC:          +3.39 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"+3.3V:         +3.38 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"in4:           +1.06 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"in5:           +1.69 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"in6:           +0.86 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"3VSB:          +3.46 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"Vbat:          +3.30 V  (min =  +0.00 V, max =  +0.00 V)  ALARM",
+		"Array Fan:    1934 RPM  (min =    0 RPM)",
+		"fan2:         2347 RPM  (min =    0 RPM)",
+		"fan3:         2011 RPM  (min =    0 RPM)",
+		"SYSTIN:        +40.0°C  (high =  +0.0°C, hyst =  +0.0°C)  ALARM  sensor = thermistor",
+		"CPUTIN:        +40.5°C  (high = +80.0°C, hyst = +75.0°C)  sensor = thermistor",
+		"AUXTIN:        +32.0°C  (high = +80.0°C, hyst = +75.0°C)  sensor = thermistor",
+		"PECI Agent 0:  +47.0°C  (high = +80.0°C, hyst = +75.0°C)",
+		"						(crit = +85.0°C)",
+		"intrusion0:   ALARM",
+		"intrusion1:   ALARM",
+		"beep_enable:  disabled",
+	}
+
+	samplesExpected := []dto.Sample{
+		dto.Sample{Key: "BOARD", Value: "47", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "CPU", Value: "46", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "FAN", Value: "1934", Unit: "rpm", Condition: "neutral"},
+	}
+
+	sensor := sensor.NewSystemSensor()
+	prefs := dto.Prefs{Number: ".,", Unit: "C"}
+
+	samplesActual := sensor.Parse(prefs, lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "SystemSensor C", samplesExpected, samplesActual)
+	}
+
+	samplesExpected = []dto.Sample{
+		dto.Sample{Key: "BOARD", Value: "79", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "CPU", Value: "78", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "FAN", Value: "1934", Unit: "rpm", Condition: "neutral"},
+	}
+
+	prefs = dto.Prefs{Number: ".,", Unit: "F"}
+
+	samplesActual = sensor.Parse(prefs, lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "SystemSensor F", samplesExpected, samplesActual)
+	}
+
 }

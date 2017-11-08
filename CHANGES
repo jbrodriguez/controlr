@@ -1,3 +1,13 @@
+Version 2.6.0 - 2017-11-08
+- Enable optional UPS status display
+- Refactor model to plugin
+- Refactor into separate package
+- Move function into common library
+- Implement system sensor scanning
+- Use new plugin logic
+- Create tests for sensor logic
+
+
 Version 2.5.1 - 2017-10-27
 - Change folder location
 - Fix CI script

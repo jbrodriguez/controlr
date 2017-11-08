@@ -17,6 +17,8 @@ import (
 	"controlr/plugin/server/src/dto"
 	"controlr/plugin/server/src/lib"
 	"controlr/plugin/server/src/model"
+	"controlr/plugin/server/src/plugins/sensor"
+	"controlr/plugin/server/src/plugins/ups"
 	"controlr/plugin/server/src/specific"
 )
 
@@ -38,7 +40,8 @@ type Core struct {
 	info    dto.Info
 	watcher *fsnotify.Watcher
 
-	ups model.Ups
+	ups    ups.Ups
+	sensor sensor.Sensor
 }
 
 // NewCore - constructor
@@ -75,20 +78,37 @@ func (c *Core) Start() (err error) {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 
-	ups, err := model.IdentifyUps()
+	s, err := sensor.IdentifySensor()
 	if err != nil {
-		mlog.Warning("Error identifying UPS: %s", err)
-		c.ups = model.NewNoUps()
+		mlog.Warning("Error identify system temp: %s", err)
+		c.sensor = sensor.NewNoSensor()
 	} else {
-		switch ups {
-		case model.APC:
-			c.ups = model.NewApc()
-		case model.NUT:
-			c.ups = model.NewNut()
+		switch s {
+		case sensor.SYSTEM:
+			c.sensor = sensor.NewSystemSensor()
 		default:
-			c.ups = model.NewNoUps()
-			break
+			c.sensor = sensor.NewNoSensor()
 		}
+	}
+
+	if c.settings.ShowUps {
+		u, err := ups.IdentifyUps()
+		if err != nil {
+			mlog.Warning("Error identifying UPS: %s", err)
+			c.ups = ups.NewNoUps()
+		} else {
+			switch u {
+			case ups.APC:
+				c.ups = ups.NewApc()
+			case ups.NUT:
+				c.ups = ups.NewNut()
+			default:
+				c.ups = ups.NewNoUps()
+				break
+			}
+		}
+	} else {
+		c.ups = ups.NewNoUps()
 	}
 
 	wake := _getMac()
@@ -96,7 +116,7 @@ func (c *Core) Start() (err error) {
 	if err != nil {
 		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
 	}
-	samples := c.ups.GetStatus()
+	samples := append(c.sensor.GetReadings(prefs), c.ups.GetStatus()...)
 
 	c.info = dto.Info{
 		Version: 1,
@@ -242,7 +262,7 @@ func (c *Core) getLog(msg *pubsub.Message) {
 }
 
 func (c *Core) getInfo(msg *pubsub.Message) {
-	c.info.Samples = c.ups.GetStatus()
+	c.info.Samples = append(c.sensor.GetReadings(c.info.Prefs), c.ups.GetStatus()...)
 	msg.Reply <- c.info
 }
 

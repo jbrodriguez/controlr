@@ -19,6 +19,7 @@ type Settings struct {
 	CertDir string
 	Port    string
 	ApiPort string
+	ShowUps bool
 	Dev     bool
 
 	Location string
@@ -27,7 +28,7 @@ type Settings struct {
 // NewSettings constructor
 func NewSettings(name, version string, locations []string) (*Settings, error) {
 	var logDir, webDir, apiDir, certDir, port, apiPort string
-	var dev bool
+	var showUps, dev bool
 
 	location := SearchFile(name, locations)
 
@@ -37,6 +38,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	flag.StringVar(&certDir, "certdir", "/boot/config/ssl/certs", "folders to look for https certs")
 	flag.StringVar(&port, "port", "2378", "port to run the http server")
 	flag.StringVar(&apiPort, "apiport", "2382", "port to run the http api endpoint")
+	flag.BoolVar(&showUps, "showups", true, "whether to provide ups status or not")
 	flag.BoolVar(&dev, "dev", false, "work in dev mode for some features")
 
 	flag.Parse()
@@ -50,6 +52,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	s.Port = ":" + port
 	s.ApiPort = ":" + apiPort
 	s.Location = location
+	s.ShowUps = showUps
 	s.Dev = dev
 
 	return s, nil
