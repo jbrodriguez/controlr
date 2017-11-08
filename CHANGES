@@ -1,3 +1,7 @@
+Version 2.6.1 - 2017-11-08
+- Fix plugin invocation
+
+
 Version 2.6.0 - 2017-11-08
 - Enable optional UPS status display
 - Refactor model to plugin

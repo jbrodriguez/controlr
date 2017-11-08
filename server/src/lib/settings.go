@@ -38,7 +38,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	flag.StringVar(&certDir, "certdir", "/boot/config/ssl/certs", "folders to look for https certs")
 	flag.StringVar(&port, "port", "2378", "port to run the http server")
 	flag.StringVar(&apiPort, "apiport", "2382", "port to run the http api endpoint")
-	flag.BoolVar(&showUps, "showups", true, "whether to provide ups status or not")
+	flag.BoolVar(&showUps, "showups", false, "whether to provide ups status or not")
 	flag.BoolVar(&dev, "dev", false, "work in dev mode for some features")
 
 	flag.Parse()
