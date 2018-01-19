@@ -1,3 +1,7 @@
+Version 2.7.1 - 2018-01-19
+- Fix plugin start script
+
+
 Version 2.7.0 - 2018-01-19
 - Add date based plugin version
 - Fix plugin install script

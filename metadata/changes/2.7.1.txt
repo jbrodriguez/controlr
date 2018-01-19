@@ -1,0 +1,3 @@
+2018-01-19 - 2.7.1
+
+- Fix plugin start script
