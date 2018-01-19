@@ -38,7 +38,7 @@ Enable ControlR Server :
 Port :
 : <input id="PORT" type="text" class="stopped" name="PORT" maxlength="40" value="<?=$controlr_port;?>" title="port must be 0-65535" placeholder="Default Port is 2378" >
 
-Cert Dir (for https, optional):
+Cert Dir (don't use, will be deprecated):
 : <input id="CERTDIR" type="text" class="stopped" name="CERTDIR" maxlength="40" value="<?=$controlr_certdir;?>" title="" placeholder="/boot/config/ssl/certs" >
 
 Provide UPS status :

@@ -11,6 +11,7 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  */
+
 package ups
 
 import (
@@ -27,12 +28,13 @@ import (
 const nutBinary string = "/usr/bin/upsc"
 const nutConfig string = "/boot/config/plugins/nut/nut.cfg"
 
-// nut
+// Nut -
 type Nut struct {
 	legend  map[string]string
 	address string
 }
 
+// NewNut -
 func NewNut() *Nut {
 	nut := &Nut{}
 
@@ -74,10 +76,12 @@ func NewNut() *Nut {
 	return nut
 }
 
+// GetStatus -
 func (n *Nut) GetStatus() []dto.Sample {
 	return n.Parse(lib.GetCmdOutput(nutBinary, n.address))
 }
 
+// Parse -
 func (n *Nut) Parse(lines []string) []dto.Sample {
 	samples := make([]dto.Sample, 0)
 
@@ -99,31 +103,28 @@ func (n *Nut) Parse(lines []string) []dto.Sample {
 			if ok {
 				sample.Value = value
 				if strings.Index(strings.ToLower(value), "online") == 0 {
-					sample.Condition = "green"
+					sample.Condition = Green
 				} else {
-					sample.Condition = "red"
+					sample.Condition = Red
 				}
 			} else {
 				sample.Value = "Refreshing ..."
-				sample.Condition = "orange"
+				sample.Condition = Orange
 			}
 
 			samples = append(samples, sample)
-
-			break
 
 		case "battery.charge":
 			sample := dto.Sample{Key: "UPS CHARGE", Value: val, Unit: "%"}
 
 			charge, _ := strconv.ParseFloat(val, 64)
 			if charge <= 10 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 
 		case "battery.runtime":
 			left, _ := strconv.ParseFloat(val, 64)
@@ -132,30 +133,27 @@ func (n *Nut) Parse(lines []string) []dto.Sample {
 			sample := dto.Sample{Key: "UPS LEFT", Value: runtime, Unit: "m"}
 
 			if left <= 5 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 
 		case "ups.realpower.nominal":
 			power, _ = strconv.ParseFloat(val, 64)
-			break
 
 		case "ups.load":
 			sample := dto.Sample{Key: "UPS LOAD", Value: val, Unit: "%"}
 
 			load, _ = strconv.ParseFloat(val, 64)
 			if load >= 90 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 		}
 	}
 
@@ -166,9 +164,9 @@ func (n *Nut) Parse(lines []string) []dto.Sample {
 		sample := dto.Sample{Key: "UPS POWER", Value: watts, Unit: "w"}
 
 		if load >= 90 {
-			sample.Condition = "red"
+			sample.Condition = Red
 		} else {
-			sample.Condition = "green"
+			sample.Condition = Green
 		}
 
 		samples = append(samples, sample)

@@ -36,6 +36,7 @@ func Shell(command string, callback Callback) {
 	}
 }
 
+// ShellEx -
 func ShellEx(command string, callback Callback, arg ...string) {
 	cmd := exec.Command(command, arg...)
 	out, err := cmd.StdoutPipe()
@@ -69,6 +70,7 @@ func Run(name string, arg ...string) (string, error) {
 	return string(result), err
 }
 
+// Pipeline -
 func Pipeline(cmds ...*exec.Cmd) (pipeLineOutput, collectedStandardError []byte, pipeLineError error) {
 	// Require at least one command
 	if len(cmds) < 1 {

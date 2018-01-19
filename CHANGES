@@ -1,3 +1,19 @@
+Version 2.7.0 - 2018-01-19
+- Add date based plugin version
+- Fix plugin install script
+- Add sleep support
+- Fix go lint errors
+- Add ipmi sensor support
+- Fix golint issues
+- Improve plugins creation logic
+- Replace available with features field
+- Fix ssl handling
+- Improve ipmi sensor detection
+- Improve install script
+- Add ipmi config support
+- Use date based version
+
+
 Version 2.6.1 - 2017-11-08
 - Fix plugin invocation
 

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -16,8 +17,6 @@ import (
 	"github.com/jbrodriguez/pubsub"
 	"github.com/vaughan0/go-ini"
 )
-
-const emhttpRe = `.*?emhttp(.*)$`
 
 // App empty placeholder
 type App struct {
@@ -75,32 +74,29 @@ func (a *App) Run(settings *lib.Settings) {
 
 	core := services.NewCore(bus, settings, state)
 	server := services.NewServer(bus, settings, state)
-	api := services.NewApi(bus, settings, state)
+	api := services.NewAPI(bus, settings, state)
 
-	core.Start()
+	mlog.FatalIfError(core.Start())
 	server.Start()
 	api.Start()
 
 	mlog.Info("Press Ctrl+C to stop ...")
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	mlog.Info("Received signal: (%s) ... shutting down the app now ...", <-c)
 
 	api.Stop()
 	server.Stop()
 	core.Stop()
 
-	mlog.Stop()
+	if err := mlog.Stop(); err != nil {
+		log.Printf("error stopping mlog: %s", err)
+	}
 }
 
 func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	file, err := ini.LoadFile(filepath.Join(apiDir, "var.ini"))
-	if err != nil {
-		return nil, err
-	}
-
-	secure, err := lib.Exists(filepath.Join(certDir, "certificate_bundle.pem"))
 	if err != nil {
 		return nil, err
 	}
@@ -129,14 +125,18 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	var usessl, port, portssl string
 
 	// if the key is missing, usessl, port and portssl are set to ""
-	usessl, ok = file.Get("", "USE_SSL")
-	port, ok = file.Get("", "PORT")
-	portssl, ok = file.Get("", "PORTSSL")
+	usessl, _ = file.Get("", "USE_SSL")
+	port, _ = file.Get("", "PORT")
+	portssl, _ = file.Get("", "PORTSSL")
 
 	// remove quotes from unRAID's ini file
 	usessl = strings.Replace(usessl, "\"", "", -1)
 	port = strings.Replace(port, "\"", "", -1)
 	portssl = strings.Replace(portssl, "\"", "", -1)
+
+	state.Cert = getCertificateName(certDir, state.Name)
+
+	secure := state.Cert != ""
 
 	// if usessl == "" this isn't a 6.4.x server, try to read emhttpPort; if that doesn't work
 	// it will default to port 80
@@ -144,7 +144,7 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	// other case, it will serve off https
 	if usessl == "" {
 		secure = false
-		port, ok = file.Get("", "emhttpPort")
+		port, _ = file.Get("", "emhttpPort")
 		port = strings.Replace(port, "\"", "", -1)
 	} else if usessl == "no" {
 		secure = false
@@ -170,36 +170,33 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 		state.Host = fmt.Sprintf("http://127.0.0.1%s/", port)
 	}
 
-	//
-
-	// cat := exec.Command("cat", "/boot/config/go")
-	// grep := exec.Command("grep", "^/usr/local/sbin/emhttp")
-
-	// // Run the pipeline
-	// output, stderr, err := lib.Pipeline(cat, grep)
-	// if err != nil {
-	// 	mlog.Warning("Failed to run commands to get emhttp port from config: %s\n", err)
-	// }
-
-	// // Print the stderr, if any
-	// if len(stderr) > 0 {
-	// 	mlog.Warning("Error while reading config (stderr): %s\n", stderr)
-	// }
-
-	// re := regexp.MustCompile(emhttpRe)
-	// args := re.FindStringSubmatch(strings.Trim(string(output), "\n\r"))
-
-	// err, secure, port := lib.GetPort(args)
-	// if err != nil {
-	// 	mlog.Warning("Unable to get emhttp port (using defaults now): %s", err)
-	// }
-
-	// if secure {
-	// 	data["protocol"] = "https"
-	// } else {
-	// 	data["protocol"] = "http"
-	// }
-	// data["port"] = port
-
 	return state, nil
+}
+
+func getCertificateName(certDir, name string) string {
+	cert := "certificate_bundle.pem"
+
+	exists, err := lib.Exists(filepath.Join(certDir, cert))
+	if err != nil {
+		mlog.Warning("unable to check for %s presence:(%s)", cert, err)
+		return ""
+	}
+
+	if exists {
+		return cert
+	}
+
+	cert = name + "_unraid_bundle.pem"
+
+	exists, err = lib.Exists(filepath.Join(certDir, cert))
+	if err != nil {
+		mlog.Warning("unable to check for %s presence:(%s)", cert, err)
+		return ""
+	}
+
+	if exists {
+		return cert
+	}
+
+	return ""
 }

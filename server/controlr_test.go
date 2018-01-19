@@ -115,15 +115,12 @@ func TestEncrypt(t *testing.T) {
 	case "1":
 		crypto = crypt.New(crypt.MD5)
 		saltPrefix = md5_crypt.MagicPrefix
-		break
 	case "5":
 		crypto = crypt.New(crypt.SHA256)
 		saltPrefix = sha256_crypt.MagicPrefix
-		break
 	case "6":
 		crypto = crypt.New(crypt.SHA512)
 		saltPrefix = sha512_crypt.MagicPrefix
-		break
 	default:
 		t.Errorf("Unknown encryption type: (%s)", encType)
 	}
@@ -319,6 +316,65 @@ func TestSystemSensor(t *testing.T) {
 
 	if !reflect.DeepEqual(samplesActual, samplesExpected) {
 		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "SystemSensor F", samplesExpected, samplesActual)
+	}
+
+}
+
+func TestIpmiSensor(t *testing.T) {
+	lines := []string{
+		"4,CPU Temp,Temperature,Nominal,38.00,C,'OK'",
+		"71,System Temp,Temperature,Nominal,30.00,C,'OK'",
+		"138,Peripheral Temp,Temperature,Nominal,39.00,C,'OK'",
+		"205,PCH Temp,Temperature,Nominal,45.00,C,'OK'",
+		"272,P1-DIMMA1 Temp,Temperature,Nominal,30.00,C,'OK'",
+		"339,P1-DIMMA2 Temp,Temperature,Nominal,31.00,C,'OK'",
+		"406,P1-DIMMB1 Temp,Temperature,Nominal,30.00,C,'OK'",
+		"473,P1-DIMMB2 Temp,Temperature,Nominal,30.00,C,'OK'",
+		"540,FAN1,Fan,Nominal,1100.00,RPM,'OK'",
+		"607,FAN2,Fan,Nominal,700.00,RPM,'OK'",
+		"674,FAN3,Fan,N/A,N/A,RPM,N/A",
+		"741,FAN4,Fan,Nominal,1100.00,RPM,'OK'",
+		"808,FANA,Fan,Nominal,300.00,RPM,'OK'",
+		"875,Vcpu,Voltage,Nominal,1.84,V,'OK'",
+		"942,VDIMM,Voltage,Nominal,1.34,V,'OK'",
+		"1009,12V,Voltage,Nominal,12.00,V,'OK'",
+		"1076,5VCC,Voltage,Nominal,4.95,V,'OK'",
+		"1143,3.3VCC,Voltage,Nominal,3.27,V,'OK'",
+		"1210,VBAT,Voltage,Nominal,2.97,V,'OK'",
+		"1277,5V Dual,Voltage,Nominal,5.03,V,'OK'",
+		"1344,3.3V AUX,Voltage,Nominal,3.28,V,'OK'",
+		"1411,1.2V BMC,Voltage,Nominal,1.26,V,'OK'",
+		"1478,1.05V PCH,Voltage,Nominal,1.05,V,'OK'",
+		"1545,Chassis Intru,Physical Security,Nominal,N/A,N/A,'OK'",
+	}
+
+	samplesExpected := []dto.Sample{
+		dto.Sample{Key: "CPU", Value: "38", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "BOARD", Value: "30", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "FAN", Value: "1100", Unit: "rpm", Condition: "neutral"},
+	}
+
+	sensor := sensor.NewIpmiSensor()
+	prefs := dto.Prefs{Number: ".,", Unit: "C"}
+
+	samplesActual := sensor.Parse(prefs, lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "IpmiSensor C", samplesExpected, samplesActual)
+	}
+
+	samplesExpected = []dto.Sample{
+		dto.Sample{Key: "CPU", Value: "70", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "BOARD", Value: "62", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "FAN", Value: "1100", Unit: "rpm", Condition: "neutral"},
+	}
+
+	prefs = dto.Prefs{Number: ".,", Unit: "F"}
+
+	samplesActual = sensor.Parse(prefs, lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "IpmiSensor F", samplesExpected, samplesActual)
 	}
 
 }

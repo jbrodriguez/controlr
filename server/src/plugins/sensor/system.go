@@ -9,6 +9,7 @@
  *
  * Plugin development contribution by gfjardim
  */
+
 package sensor
 
 import (
@@ -21,17 +22,21 @@ import (
 
 const sensorBinary string = "/usr/bin/sensors"
 
+// SystemSensor -
 type SystemSensor struct {
 }
 
+// NewSystemSensor -
 func NewSystemSensor() *SystemSensor {
 	return &SystemSensor{}
 }
 
+// GetReadings -
 func (s *SystemSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
 	return s.Parse(prefs, lib.GetCmdOutput(sensorBinary, "-A"))
 }
 
+// Parse -
 func (s *SystemSensor) Parse(prefs dto.Prefs, lines []string) []dto.Sample {
 	samples := make([]dto.Sample, 0)
 

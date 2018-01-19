@@ -18,7 +18,7 @@ type Settings struct {
 	APIDir  string
 	CertDir string
 	Port    string
-	ApiPort string
+	APIPort string
 	ShowUps bool
 	Dev     bool
 
@@ -50,7 +50,7 @@ func NewSettings(name, version string, locations []string) (*Settings, error) {
 	s.APIDir = apiDir
 	s.CertDir = certDir
 	s.Port = ":" + port
-	s.ApiPort = ":" + apiPort
+	s.APIPort = ":" + apiPort
 	s.Location = location
 	s.ShowUps = showUps
 	s.Dev = dev

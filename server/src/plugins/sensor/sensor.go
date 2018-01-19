@@ -1,3 +1,9 @@
+/*
+Ipmi parts based on code from dmacias
+https://github.com/dmacias72/unRAID-plugins/blob/master/source/ipmi/usr/local/emhttp/plugins/ipmi/include/ipmi_helpers.php
+Check LICENSE file in this folder
+*/
+
 package sensor
 
 import (
@@ -5,15 +11,33 @@ import (
 	"controlr/plugin/server/src/lib"
 )
 
-type SensorKind int
+// Kind -
+type Kind int
 
+// NOSENSOR -
 const (
-	NOSENSOR SensorKind = iota // does not exist
-	SYSTEM              = iota // dynamix.system.temp
+	NOSENSOR Kind = iota // does not exist
+	SYSTEM               // dynamix.system.temp
+	IPMI                 // ipmi
 )
 
-func IdentifySensor() (SensorKind, error) {
-	exists, err := lib.Exists("/usr/local/emhttp/plugins/dynamix.system.temp")
+// IdentifySensor -
+func IdentifySensor() (Kind, error) {
+	ipmi, err := checkIpmiPresence()
+	if err != nil {
+		return NOSENSOR, err
+	}
+
+	exists, err := lib.Exists("/usr/local/emhttp/plugins/ipmi")
+	if err != nil {
+		return NOSENSOR, err
+	}
+
+	if ipmi && exists {
+		return IPMI, nil
+	}
+
+	exists, err = lib.Exists("/usr/local/emhttp/plugins/dynamix.system.temp")
 	if err != nil {
 		return NOSENSOR, err
 	}
@@ -25,6 +49,38 @@ func IdentifySensor() (SensorKind, error) {
 	return NOSENSOR, nil
 }
 
+// Sensor -
 type Sensor interface {
 	GetReadings(prefs dto.Prefs) []dto.Sample
+}
+
+func checkIpmiPresence() (bool, error) {
+	exists, err := lib.Exists("/dev/ipmi0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	exists, err = lib.Exists("/dev/ipmi/0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	exists, err = lib.Exists("/dev/ipmidev/0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	return false, nil
 }

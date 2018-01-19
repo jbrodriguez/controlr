@@ -130,7 +130,7 @@ func (s *Server) Start() {
 		s.proxy = CreateReverseProxy(targetURL)
 
 		go func() {
-			err := s.engine.StartTLS(s.settings.Port, filepath.Join(s.settings.CertDir, "certificate_bundle.pem"), filepath.Join(s.settings.CertDir, "certificate_bundle.pem"))
+			err := s.engine.StartTLS(s.settings.Port, filepath.Join(s.settings.CertDir, s.state.Cert), filepath.Join(s.settings.CertDir, s.state.Cert))
 			if err != nil {
 				mlog.Fatalf("Unable to start https server: %s", err)
 			}
@@ -195,15 +195,12 @@ func (s *Server) login(c echo.Context) error {
 		case "1":
 			crypto = crypt.New(crypt.MD5)
 			saltPrefix = md5_crypt.MagicPrefix
-			break
 		case "5":
 			crypto = crypt.New(crypt.SHA256)
 			saltPrefix = sha256_crypt.MagicPrefix
-			break
 		case "6":
 			crypto = crypt.New(crypt.SHA512)
 			saltPrefix = sha512_crypt.MagicPrefix
-			break
 		default:
 			mlog.Warning("Unknown encryption type: (%s)", encType)
 			return c.JSON(http.StatusUnauthorized, map[string]string{"token": "invalid"})
@@ -253,7 +250,9 @@ func (s *Server) handleWs(c echo.Context) (err error) {
 
 		conn := net.NewConnection(id, ws, s.onMessage, s.onClose)
 		s.pool[id] = conn
-		conn.Read()
+		if err := conn.Read(); err != nil {
+			mlog.Warning("error reading from connection: %s", err)
+		}
 
 	}).ServeHTTP(c.Response(), c.Request())
 
@@ -274,7 +273,9 @@ func (s *Server) broadcast(msg *pubsub.Message) {
 	packet := msg.Payload.(*dto.Packet)
 	if _, ok := s.pool[msg.Id]; ok {
 		conn := s.pool[msg.Id]
-		conn.Write(packet)
+		if err := conn.Write(packet); err != nil {
+			mlog.Warning("error writing to connection: %s", err)
+		}
 	}
 }
 
@@ -296,6 +297,7 @@ func singleJoiningSlash(a, b string) string {
 	return a + b
 }
 
+// CreateReverseProxy -
 func CreateReverseProxy(target *url.URL) *httputil.ReverseProxy {
 	targetQuery := target.RawQuery
 	director := func(req *http.Request) {

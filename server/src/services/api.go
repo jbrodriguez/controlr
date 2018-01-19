@@ -19,20 +19,19 @@ const (
 	capacity   = 3
 )
 
-// Api type
-type Api struct {
+// API type
+type API struct {
 	bus      *pubsub.PubSub
 	settings *lib.Settings
 
 	engine *echo.Echo
 
-	state  *model.State
-	secret string
+	state *model.State
 }
 
-// NewApi - constructor
-func NewApi(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *Api {
-	server := &Api{
+// NewAPI - constructor
+func NewAPI(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *API {
+	server := &API{
 		bus:      bus,
 		settings: settings,
 		state:    state,
@@ -43,7 +42,7 @@ func NewApi(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *Api
 const basic = "Basic"
 
 // Start service
-func (a *Api) Start() {
+func (a *API) Start() {
 	mlog.Info("Starting service Api ...")
 
 	a.engine = echo.New()
@@ -82,31 +81,31 @@ func (a *Api) Start() {
 
 	if a.state.Secure {
 		go func() {
-			err := a.engine.StartTLS(a.settings.ApiPort, filepath.Join(a.settings.CertDir, "certificate_bundle.pem"), filepath.Join(a.settings.CertDir, "certificate_bundle.pem"))
+			err := a.engine.StartTLS(a.settings.APIPort, filepath.Join(a.settings.CertDir, a.state.Cert), filepath.Join(a.settings.CertDir, a.state.Cert))
 			if err != nil {
 				mlog.Fatalf("Unable to start https api: %s", err)
 			}
 		}()
 
-		mlog.Info("Api started listening https on %s", a.settings.ApiPort)
+		mlog.Info("Api started listening https on %s", a.settings.APIPort)
 	} else {
 		go func() {
-			err := a.engine.Start(a.settings.ApiPort)
+			err := a.engine.Start(a.settings.APIPort)
 			if err != nil {
 				mlog.Fatalf("Unable to start http api: %s", err)
 			}
 		}()
 
-		mlog.Info("Api started listening http on %s", a.settings.ApiPort)
+		mlog.Info("Api started listening http on %s", a.settings.APIPort)
 	}
 }
 
 // Stop service
-func (a *Api) Stop() {
+func (a *API) Stop() {
 	mlog.Info("stopped service Api ...")
 }
 
-func (a *Api) getLog(c echo.Context) (err error) {
+func (a *API) getLog(c echo.Context) (err error) {
 	logType := c.Param("logType")
 	mlog.Info("log (%s) requested", logType)
 
@@ -119,19 +118,19 @@ func (a *Api) getLog(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &resp)
 }
 
-func (a *Api) debugGet(c echo.Context) (err error) {
+func (a *API) debugGet(c echo.Context) (err error) {
 	mlog.Info("received debug/get")
 	return c.String(http.StatusOK, "Ok")
 }
 
-func (a *Api) debugPost(c echo.Context) (err error) {
+func (a *API) debugPost(c echo.Context) (err error) {
 	req, _ := c.FormParams()
 	mlog.Info("req=%+v", req)
 
 	return c.String(http.StatusOK, "Ok")
 }
 
-func (a *Api) getInfo(c echo.Context) (err error) {
+func (a *API) getInfo(c echo.Context) (err error) {
 	mlog.Info("received /info")
 
 	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
@@ -145,7 +144,7 @@ func (a *Api) getInfo(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &resp)
 }
 
-func (a *Api) getMac(c echo.Context) (err error) {
+func (a *API) getMac(c echo.Context) (err error) {
 	mlog.Info("received /mac")
 
 	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
@@ -158,7 +157,7 @@ func (a *Api) getMac(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &resp)
 }
 
-func (a *Api) getPrefs(c echo.Context) (err error) {
+func (a *API) getPrefs(c echo.Context) (err error) {
 	mlog.Info("received /prefs")
 
 	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}

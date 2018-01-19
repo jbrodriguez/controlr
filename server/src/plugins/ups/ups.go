@@ -5,15 +5,25 @@ import (
 	"controlr/plugin/server/src/lib"
 )
 
-type UpsKind int
+// Kind -
+type Kind int
 
+// DNE -
 const (
-	DNE UpsKind = iota // does not exist
-	APC         = iota
-	NUT         = iota
+	DNE Kind = iota // does not exist
+	APC
+	NUT
 )
 
-func IdentifyUps() (UpsKind, error) {
+// Green -
+const (
+	Green  = "green"
+	Red    = "red"
+	Orange = "orange"
+)
+
+// IdentifyUps -
+func IdentifyUps() (Kind, error) {
 	exists, err := lib.Exists("/var/run/nut/upsmon.pid")
 	if err != nil {
 		return DNE, err
@@ -35,6 +45,7 @@ func IdentifyUps() (UpsKind, error) {
 	return DNE, nil
 }
 
+// Ups -
 type Ups interface {
 	GetStatus() []dto.Sample
 }

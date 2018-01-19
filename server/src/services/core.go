@@ -22,7 +22,8 @@ import (
 	"controlr/plugin/server/src/specific"
 )
 
-var iniPrefs string = "/boot/config/plugins/dynamix/dynamix.cfg"
+var iniPrefs = "/boot/config/plugins/dynamix/dynamix.cfg"
+var sleepBin = "/usr/local/emhttp/plugins/dynamix.s3.sleep/include/SleepMode.php"
 
 // Core service
 type Core struct {
@@ -68,7 +69,7 @@ func NewCore(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *Co
 }
 
 // Start service
-func (c *Core) Start() (err error) {
+func (c *Core) Start() error {
 	mlog.Info("starting service Core ...")
 
 	c.actor.Register("model/REFRESH", c.refresh)
@@ -78,53 +79,23 @@ func (c *Core) Start() (err error) {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 
-	s, err := sensor.IdentifySensor()
-	if err != nil {
-		mlog.Warning("Error identify system temp: %s", err)
-		c.sensor = sensor.NewNoSensor()
-	} else {
-		switch s {
-		case sensor.SYSTEM:
-			c.sensor = sensor.NewSystemSensor()
-		default:
-			c.sensor = sensor.NewNoSensor()
-		}
-	}
-
-	if c.settings.ShowUps {
-		u, err := ups.IdentifyUps()
-		if err != nil {
-			mlog.Warning("Error identifying UPS: %s", err)
-			c.ups = ups.NewNoUps()
-		} else {
-			switch u {
-			case ups.APC:
-				c.ups = ups.NewApc()
-			case ups.NUT:
-				c.ups = ups.NewNut()
-			default:
-				c.ups = ups.NewNoUps()
-				break
-			}
-		}
-	} else {
-		c.ups = ups.NewNoUps()
-	}
-
 	wake := _getMac()
-	prefs, err := _getPrefs()
-	if err != nil {
-		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
-	}
+	prefs := _getPrefs()
+	features := _getFeatures()
+
+	c.sensor = c.createSensor()
+	c.ups = c.createUps()
 	samples := append(c.sensor.GetReadings(prefs), c.ups.GetStatus()...)
 
 	c.info = dto.Info{
-		Version: 1,
-		Wake:    wake,
-		Prefs:   prefs,
-		Samples: samples,
+		Version:  2,
+		Wake:     wake,
+		Prefs:    prefs,
+		Samples:  samples,
+		Features: features,
 	}
 
+	var err error
 	c.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		mlog.Fatal(err)
@@ -137,16 +108,10 @@ func (c *Core) Start() (err error) {
 				mlog.Info("event: %s", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					mlog.Info("modified file: %s", event.Name)
-
-					prefs, err := _getPrefs()
-					if err != nil {
-						mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
-					}
-
-					c.info.Prefs = prefs
+					c.info.Prefs = _getPrefs()
 				}
-			case err := <-c.watcher.Errors:
-				mlog.Warning("Error:", err)
+			case err3 := <-c.watcher.Errors:
+				mlog.Warning("Error:", err3)
 			}
 		}
 	}()
@@ -164,7 +129,9 @@ func (c *Core) Start() (err error) {
 // Stop service
 func (c *Core) Stop() {
 	if c.watcher != nil {
-		c.watcher.Close()
+		if err := c.watcher.Close(); err != nil {
+			mlog.Warning("error closing watcher: %s", err)
+		}
 	}
 
 	mlog.Info("stopped service Core ...")
@@ -267,18 +234,45 @@ func (c *Core) getInfo(msg *pubsub.Message) {
 }
 
 func (c *Core) getMac(msg *pubsub.Message) {
-	wake := _getMac()
-
-	msg.Reply <- wake.Mac
+	msg.Reply <- _getMac()
 }
 
 func (c *Core) getPrefs(msg *pubsub.Message) {
-	prefs, err := _getPrefs()
+	msg.Reply <- _getPrefs()
+}
+
+func (c *Core) createSensor() sensor.Sensor {
+	s, err := sensor.IdentifySensor()
 	if err != nil {
-		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
+		mlog.Warning("Error identify system temp: %s", err)
+	} else {
+		switch s {
+		case sensor.SYSTEM:
+			return sensor.NewSystemSensor()
+		case sensor.IPMI:
+			return sensor.NewIpmiSensor()
+		}
 	}
 
-	msg.Reply <- prefs
+	return sensor.NewNoSensor()
+}
+
+func (c *Core) createUps() ups.Ups {
+	if c.settings.ShowUps {
+		u, err := ups.IdentifyUps()
+		if err != nil {
+			mlog.Warning("Error identifying UPS: %s", err)
+		} else {
+			switch u {
+			case ups.APC:
+				return ups.NewApc()
+			case ups.NUT:
+				return ups.NewNut()
+			}
+		}
+	}
+
+	return ups.NewNoUps()
 }
 
 func _getMac() dto.Wake {
@@ -291,7 +285,7 @@ func _getMac() dto.Wake {
 	for _, iface := range ifaces {
 		// mlog.Info("[%s] = %s", iface.Name, iface.HardwareAddr)
 		if iface.Name == "eth0" {
-			wake.Mac = fmt.Sprintf("%s", iface.HardwareAddr)
+			wake.Mac = iface.HardwareAddr.String()
 			break
 		}
 	}
@@ -299,7 +293,7 @@ func _getMac() dto.Wake {
 	return wake
 }
 
-func _getPrefs() (dto.Prefs, error) {
+func _getPrefs() dto.Prefs {
 	prefs := dto.Prefs{
 		Number: ".,",
 		Unit:   "C",
@@ -307,7 +301,8 @@ func _getPrefs() (dto.Prefs, error) {
 
 	file, err := ini.LoadFile(iniPrefs)
 	if err != nil {
-		return prefs, err
+		mlog.Warning("Unable to load/parse prefs file (%s): %s", iniPrefs, err)
+		return prefs
 	}
 
 	for key, value := range file["display"] {
@@ -320,5 +315,19 @@ func _getPrefs() (dto.Prefs, error) {
 		}
 	}
 
-	return prefs, nil
+	return prefs
+}
+
+func _getFeatures() map[string]bool {
+	features := make(map[string]bool)
+
+	// is sleep available ?
+	exists, err := lib.Exists(sleepBin)
+	if err != nil {
+		mlog.Warning("getfeatures:sleep:(%s)", err)
+	}
+
+	features["sleep"] = exists
+
+	return features
 }

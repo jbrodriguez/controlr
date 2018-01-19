@@ -10,6 +10,7 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  */
+
 package ups
 
 import (
@@ -21,11 +22,12 @@ import (
 
 const apcBinary string = "/sbin/apcaccess"
 
-// apcupsd
+// Apc - apcupsd
 type Apc struct {
 	legend map[string]string
 }
 
+// NewApc -
 func NewApc() *Apc {
 	apc := &Apc{}
 
@@ -44,10 +46,12 @@ func NewApc() *Apc {
 	return apc
 }
 
+// GetStatus -
 func (a *Apc) GetStatus() []dto.Sample {
 	return a.Parse(lib.GetCmdOutput(apcBinary, ""))
 }
 
+// Parse -
 func (a *Apc) Parse(lines []string) []dto.Sample {
 	samples := make([]dto.Sample, 0)
 
@@ -69,17 +73,16 @@ func (a *Apc) Parse(lines []string) []dto.Sample {
 			if ok {
 				sample.Value = value
 				if strings.Index(strings.ToLower(val), "online") == 0 {
-					sample.Condition = "green"
+					sample.Condition = Green
 				} else {
-					sample.Condition = "red"
+					sample.Condition = Red
 				}
 			} else {
 				sample.Value = "Refreshing ..."
-				sample.Condition = "orange"
+				sample.Condition = Orange
 			}
 
 			samples = append(samples, sample)
-			break
 
 		case "BCHARGE":
 			text := strings.Fields(val)
@@ -88,13 +91,12 @@ func (a *Apc) Parse(lines []string) []dto.Sample {
 			sample := dto.Sample{Key: "UPS CHARGE", Value: text[0], Unit: "%"}
 
 			if charge <= 10 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 
 		case "TIMELEFT":
 			text := strings.Fields(val)
@@ -107,19 +109,16 @@ func (a *Apc) Parse(lines []string) []dto.Sample {
 			sample := dto.Sample{Key: "UPS LEFT", Value: text[0], Unit: unit}
 
 			if left <= 5 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 
 		case "NOMPOWER":
 			text := strings.Fields(val)
 			power, _ = strconv.ParseFloat(text[0], 64)
-
-			break
 
 		case "LOADPCT":
 			text := strings.Fields(val)
@@ -128,13 +127,12 @@ func (a *Apc) Parse(lines []string) []dto.Sample {
 			sample := dto.Sample{Key: "UPS LOAD", Value: text[0], Unit: "%"}
 
 			if load >= 90 {
-				sample.Condition = "red"
+				sample.Condition = Red
 			} else {
-				sample.Condition = "green"
+				sample.Condition = Green
 			}
 
 			samples = append(samples, sample)
-			break
 		}
 	}
 
@@ -145,9 +143,9 @@ func (a *Apc) Parse(lines []string) []dto.Sample {
 		sample := dto.Sample{Key: "UPS POWER", Value: watts, Unit: "w"}
 
 		if load >= 90 {
-			sample.Condition = "red"
+			sample.Condition = Red
 		} else {
-			sample.Condition = "green"
+			sample.Condition = Green
 		}
 
 		samples = append(samples, sample)

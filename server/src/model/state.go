@@ -1,5 +1,6 @@
 package model
 
+// State -
 type State struct {
 	Name      string
 	Timezone  string
@@ -7,4 +8,5 @@ type State struct {
 	CsrfToken string
 	Host      string
 	Secure    bool
+	Cert      string
 }

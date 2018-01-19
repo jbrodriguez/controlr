@@ -45,22 +45,22 @@ type options struct {
 }
 
 // GetPort - define emhttp port from string
-func GetPort(match []string) (error, bool, string) {
+func GetPort(match []string) (bool, string, error) {
 	if len(match) == 0 {
 		// no match, i can't parse this
-		return errors.New("Unable to parse emhttp flags"), false, "80"
+		return false, "80", errors.New("Unable to parse emhttp flags")
 	}
 
 	allFlags := strings.Trim(match[1], " ")
 	if allFlags == "&" {
 		// emhttp & variant
-		return nil, false, "80"
+		return false, "80", nil
 	}
 
 	args := strings.Split(allFlags, " ")
 	if len(args) <= 2 {
 		// at the very least, I should have -p <port(s)>
-		return errors.New("Invalid flags passed to emhttp"), false, "80"
+		return false, "80", errors.New("Invalid flags passed to emhttp")
 	}
 
 	opts := options{}
@@ -68,13 +68,13 @@ func GetPort(match []string) (error, bool, string) {
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
 		// sent us incorrect flags
-		return errors.New("Invalid flags passed to emhttp (parse)"), false, "80"
+		return false, "80", errors.New("Invalid flags passed to emhttp (parse)")
 	}
 
 	ports := strings.Split(opts.Port, ",")
 	if len(ports) == 1 {
 		// emhttp -p <m> & variant
-		return nil, false, ports[0]
+		return false, ports[0], nil
 	}
 
 	http := ports[0]
@@ -83,20 +83,21 @@ func GetPort(match []string) (error, bool, string) {
 	if opts.Redirect {
 		if http != "" && https != "" {
 			// emhttp -r -p <m>,<n> variant
-			return nil, true, https
+			return true, https, nil
 		}
 	} else {
 		if https != "" {
 			// emhttp -p ,<n> variant and
 			// emhttp -p <m>,<n> variant
-			return nil, true, https
+			return true, https, nil
 		}
 	}
 
 	// anything else is invalid
-	return nil, false, "80"
+	return false, "80", nil
 }
 
+// Get -
 func Get(client *http.Client, host, resource string) (string, error) {
 	ep, err := url.Parse(host)
 	if err != nil {
@@ -128,6 +129,7 @@ func Get(client *http.Client, host, resource string) (string, error) {
 	return string(body), nil
 }
 
+// Post -
 func Post(client *http.Client, host, resource string, args map[string]string) (string, error) {
 	ep, err := url.Parse(host)
 	if err != nil {
@@ -154,9 +156,10 @@ func Post(client *http.Client, host, resource string, args map[string]string) (s
 	}
 	defer resp.Body.Close()
 
-	return string(resp.Status), nil
+	return resp.Status, nil
 }
 
+// Round -
 func Round(a float64) int {
 	if a < 0 {
 		return int(a - 0.5)
@@ -164,13 +167,14 @@ func Round(a float64) int {
 	return int(a + 0.5)
 }
 
-func GetCmdOutput(command string, args string) []string {
+// GetCmdOutput -
+func GetCmdOutput(command string, args ...string) []string {
 	lines := make([]string, 0)
 
-	if args != "" {
+	if len(args) > 0 {
 		ShellEx(command, func(line string) {
 			lines = append(lines, line)
-		}, args)
+		}, args...)
 	} else {
 		Shell(command, func(line string) {
 			lines = append(lines, line)
