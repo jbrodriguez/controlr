@@ -94,7 +94,10 @@ func (s *IpmiSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
 		args = append(args, "--retransmission-timeout=1000")
 	}
 
-	return s.Parse(prefs, lib.GetCmdOutput(ipmiBinary, args...))
+	mlog.Warning("ipmi:args:(%v)", args)
+
+	return make([]dto.Sample, 0)
+	// return s.Parse(prefs, lib.GetCmdOutput(ipmiBinary, args...))
 }
 
 // Parse -
