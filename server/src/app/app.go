@@ -18,6 +18,8 @@ import (
 	"github.com/vaughan0/go-ini"
 )
 
+const identCfg = "/boot/config/ident.cfg"
+
 // App empty placeholder
 type App struct {
 }
@@ -122,12 +124,18 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 		state.CsrfToken = strings.Replace(tmp, "\"", "", -1)
 	}
 
+	// use main ssl config file
+	ident, err := ini.LoadFile(identCfg)
+	if err != nil {
+		return nil, err
+	}
+
 	var usessl, port, portssl string
 
 	// if the key is missing, usessl, port and portssl are set to ""
-	usessl, _ = file.Get("", "USE_SSL")
-	port, _ = file.Get("", "PORT")
-	portssl, _ = file.Get("", "PORTSSL")
+	usessl, _ = ident.Get("", "USE_SSL")
+	port, _ = ident.Get("", "PORT")
+	portssl, _ = ident.Get("", "PORTSSL")
 
 	// remove quotes from unRAID's ini file
 	usessl = strings.Replace(usessl, "\"", "", -1)

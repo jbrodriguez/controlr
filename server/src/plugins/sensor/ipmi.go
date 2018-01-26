@@ -87,9 +87,9 @@ func (s *IpmiSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
 
 	if s.network {
 		args = append(args, "--always-prefix")
-		args = append(args, "-h "+s.ipaddr)
-		args = append(args, "-u "+s.user)
-		args = append(args, "-p "+s.password)
+		args = append(args, "-h "+strconv.Quote(s.ipaddr))
+		args = append(args, "-u "+strconv.Quote(s.user))
+		args = append(args, "-p "+strconv.Quote(s.password))
 		args = append(args, "--session-timeout=5000")
 		args = append(args, "--retransmission-timeout=1000")
 	}

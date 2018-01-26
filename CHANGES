@@ -1,3 +1,8 @@
+Version 2.7.3 - 2018-01-26
+- Quote ipmi-sensor params
+- Use main ssl config file
+
+
 Version 2.7.2 - 2018-01-22
 - Fix startup issue
 
