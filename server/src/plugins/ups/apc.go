@@ -48,7 +48,7 @@ func NewApc() *Apc {
 
 // GetStatus -
 func (a *Apc) GetStatus() []dto.Sample {
-	return a.Parse(lib.GetCmdOutput(apcBinary, ""))
+	return a.Parse(lib.GetCmdOutput(apcBinary))
 }
 
 // Parse -
