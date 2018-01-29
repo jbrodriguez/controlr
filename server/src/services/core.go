@@ -79,13 +79,26 @@ func (c *Core) Start() error {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 
+	mlog.Info("debug:getting mac/prefs/features")
+
 	wake := _getMac()
 	prefs := _getPrefs()
 	features := _getFeatures()
 
+	mlog.Info("debug:creating plugins")
+
 	c.sensor = c.createSensor()
 	c.ups = c.createUps()
-	samples := append(c.sensor.GetReadings(prefs), c.ups.GetStatus()...)
+
+	mlog.Info("debug:getting samples")
+
+	sensorReadings := c.sensor.GetReadings(prefs)
+	mlog.Info("debug:sensor samples:(%v)", sensorReadings)
+
+	upsReadings := c.ups.GetStatus()
+	mlog.Info("debug:ups samples:(%v)", upsReadings)
+
+	samples := append(sensorReadings, upsReadings...)
 
 	c.info = dto.Info{
 		Version:  2,
@@ -248,11 +261,15 @@ func (c *Core) createSensor() sensor.Sensor {
 	} else {
 		switch s {
 		case sensor.SYSTEM:
+			mlog.Info("debug:created system sensor")
 			return sensor.NewSystemSensor()
 		case sensor.IPMI:
+			mlog.Info("debug:created ipmi sensor")
 			return sensor.NewIpmiSensor()
 		}
 	}
+
+	mlog.Info("debug:no sensor detected")
 
 	return sensor.NewNoSensor()
 }
@@ -265,12 +282,16 @@ func (c *Core) createUps() ups.Ups {
 		} else {
 			switch u {
 			case ups.APC:
+				mlog.Info("debug:created apc ups")
 				return ups.NewApc()
 			case ups.NUT:
+				mlog.Info("debug:created nut ups")
 				return ups.NewNut()
 			}
 		}
 	}
+
+	mlog.Info("debug:no ups detected")
 
 	return ups.NewNoUps()
 }

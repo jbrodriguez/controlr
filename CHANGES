@@ -1,3 +1,7 @@
+Version 2.7.4 - 2018-01-29
+- Add debug logging
+
+
 Version 2.7.3 - 2018-01-26
 - Quote ipmi-sensor params
 - Use main ssl config file

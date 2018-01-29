@@ -127,6 +127,7 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	// use main ssl config file
 	ident, err := ini.LoadFile(identCfg)
 	if err != nil {
+		mlog.Info("debug:unable to load ident cfg:(%s)", err)
 		return nil, err
 	}
 
@@ -146,6 +147,8 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 
 	secure := state.Cert != ""
 
+	mlog.Info("debug:secure(%t):cert(%s):usessl(%s):version(%s)", secure, state.Cert, usessl, state.Version)
+
 	// if usessl == "" this isn't a 6.4.x server, try to read emhttpPort; if that doesn't work
 	// it will default to port 80
 	// otherwise usessl has some value, the plugin will serve off http if the value is no, in any
@@ -159,6 +162,8 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	}
 
 	state.Secure = secure
+
+	mlog.Info("debug:secure(%t):cert(%s):usessl(%s):version(%s)", secure, state.Cert, usessl, state.Version)
 
 	if secure {
 		if portssl == "" || portssl == "443" {
@@ -178,6 +183,8 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 		state.Host = fmt.Sprintf("http://127.0.0.1%s/", port)
 	}
 
+	mlog.Info("debug:host(%s)", state.Host)
+
 	return state, nil
 }
 
@@ -191,6 +198,7 @@ func getCertificateName(certDir, name string) string {
 	}
 
 	if exists {
+		mlog.Info("debug:cert(%s)", cert)
 		return cert
 	}
 
@@ -203,8 +211,11 @@ func getCertificateName(certDir, name string) string {
 	}
 
 	if exists {
+		mlog.Info("debug:cert(%s)", cert)
 		return cert
 	}
+
+	mlog.Info("debug:cert not found")
 
 	return ""
 }
