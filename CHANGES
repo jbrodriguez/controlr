@@ -1,3 +1,7 @@
+Version 2.7.7 - 2018-01-30
+- Remove ipmi sampling
+
+
 Version 2.7.6 - 2018-01-30
 - Enable ipmi data refresh
 
