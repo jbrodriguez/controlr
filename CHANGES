@@ -1,3 +1,7 @@
+Version 2.7.6 - 2018-01-30
+- Enable ipmi data refresh
+
+
 Version 2.7.5 - 2018-01-29
 - Fix bump-hook script
 - Fix apcaccess invocation
