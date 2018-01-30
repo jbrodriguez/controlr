@@ -19,7 +19,7 @@ import (
 	ini "github.com/vaughan0/go-ini"
 )
 
-const ipmiBinary = "/usr/sbin/ipmi-sensors"
+const ipmiBinary = "/usr/sbin/ipmisensors"
 const ipmiConfig string = "/boot/config/plugins/ipmi/ipmi.cfg"
 
 // IpmiSensor -
@@ -85,19 +85,19 @@ func (s *IpmiSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
 	args = append(args, "--no-header-output")
 	args = append(args, "--interpret-oem-data")
 
-	if s.network {
-		args = append(args, "--always-prefix")
-		args = append(args, "-h "+strconv.Quote(s.ipaddr))
-		args = append(args, "-u "+strconv.Quote(s.user))
-		args = append(args, "-p "+strconv.Quote(s.password))
-		args = append(args, "--session-timeout=5000")
-		args = append(args, "--retransmission-timeout=1000")
-	}
+	// if s.network {
+	// 	args = append(args, "--always-prefix")
+	// 	args = append(args, "-h "+strconv.Quote(s.ipaddr))
+	// 	args = append(args, "-u "+strconv.Quote(s.user))
+	// 	args = append(args, "-p "+strconv.Quote(s.password))
+	// 	args = append(args, "--session-timeout=5000")
+	// 	args = append(args, "--retransmission-timeout=1000")
+	// }
 
-	mlog.Warning("ipmi:args:(%v)", args)
-	return make([]dto.Sample, 0)
+	// mlog.Warning("ipmi:args:(%v)", args)
+	// return make([]dto.Sample, 0)
 
-	// return s.Parse(prefs, lib.GetCmdOutput(ipmiBinary, args...))
+	return s.Parse(prefs, lib.GetCmdOutput(ipmiBinary, args...))
 }
 
 // Parse -
