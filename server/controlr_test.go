@@ -349,32 +349,105 @@ func TestIpmiSensor(t *testing.T) {
 	}
 
 	samplesExpected := []dto.Sample{
-		dto.Sample{Key: "CPU", Value: "38", Unit: "C", Condition: "neutral"},
-		dto.Sample{Key: "BOARD", Value: "30", Unit: "C", Condition: "neutral"},
-		dto.Sample{Key: "FAN", Value: "1100", Unit: "rpm", Condition: "neutral"},
+		dto.Sample{Key: "CPU Temp", Value: "38", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "System Temp", Value: "30", Unit: "C", Condition: "neutral"},
+		dto.Sample{Key: "FAN1", Value: "1100", Unit: "RPM", Condition: "neutral"},
 	}
 
-	sensor := sensor.NewIpmiSensor()
+	plugin := sensor.NewIpmiSensor()
+
+	sensors := map[string]bool{
+		"4":   true,
+		"71":  true,
+		"540": true,
+	}
+
 	prefs := dto.Prefs{Number: ".,", Unit: "C"}
 
-	samplesActual := sensor.Parse(prefs, lines)
+	samplesActual := plugin.Parse(prefs, sensors, lines)
 
 	if !reflect.DeepEqual(samplesActual, samplesExpected) {
 		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "IpmiSensor C", samplesExpected, samplesActual)
 	}
 
 	samplesExpected = []dto.Sample{
-		dto.Sample{Key: "CPU", Value: "70", Unit: "F", Condition: "neutral"},
-		dto.Sample{Key: "BOARD", Value: "62", Unit: "F", Condition: "neutral"},
-		dto.Sample{Key: "FAN", Value: "1100", Unit: "rpm", Condition: "neutral"},
+		dto.Sample{Key: "CPU Temp", Value: "70", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "System Temp", Value: "62", Unit: "F", Condition: "neutral"},
+		dto.Sample{Key: "FAN1", Value: "1100", Unit: "RPM", Condition: "neutral"},
 	}
 
 	prefs = dto.Prefs{Number: ".,", Unit: "F"}
 
-	samplesActual = sensor.Parse(prefs, lines)
+	samplesActual = plugin.Parse(prefs, sensors, lines)
 
 	if !reflect.DeepEqual(samplesActual, samplesExpected) {
 		t.Errorf("Comparing %q: expected\n %q\n but got\n %q\n", "IpmiSensor F", samplesExpected, samplesActual)
+	}
+
+}
+
+func TestIpmiGetSensorsLocal(t *testing.T) {
+	lines := []string{
+		`IPMISELD="disable"`,
+		`IPMIPOLL="60"`,
+		`NETWORK="disable"`,
+		`LOCAL="disable"`,
+		`IPADDR=""`,
+		`USER=""`,
+		`PASSWORD=""`,
+		`DISP_SENSOR1="18"`,
+		`DISP_SENSOR2="16"`,
+		`DISP_SENSOR3="15"`,
+		`DISP_SENSOR4="13"`,
+		`LOADCFG="disable"`,
+		`DASHTYPES="Temperature,Fan"`,
+		`IGNORE=""`,
+		`DIGNORE="3,4,5,6,7,8,9"`,
+		`DASH="enable"`,
+		`DEVIGNORE="SanDisk_Cruzer_Fit_4C530001901204112304-0:0"`,
+		`DEVS="enable"`,
+	}
+
+	samplesExpected := map[string]bool{
+		"18": true,
+		"16": true,
+		"15": true,
+		"13": true,
+	}
+
+	samplesActual := sensor.GetSensorIDs(lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %s: expected\n %v\n but got\n %v\n", "IpmiGetSensorIDs Local", samplesExpected, samplesActual)
+	}
+
+	lines = []string{
+		`SERVICE="disable"`,
+		`IPMIPOLL="300"`,
+		`NETWORK="enable"`,
+		`LOCAL="disable"`,
+		`IPADDR="192.168.10.50"`,
+		`USER="admin"`,
+		`PASSWORD="<snip>"`,
+		`IPMISELD="disable"`,
+		`IPMIFAN="disable"`,
+		`IPMIBOARD=""`,
+		`DISP_SENSOR1="3232238130_18"`,
+		`DISP_SENSOR2="3232238130_16"`,
+		`DISP_SENSOR3="3232238130_15"`,
+		`DISP_SENSOR4="3232238130_13"`,
+		`IGNORE=""`,
+		`DASHTYPES="Temperature,Fan"`,
+		`DIGNORE="3,4,5,6,7,8,9"`,
+		`DASH="enable"`,
+		`DEVIGNORE=""`,
+		`DEVS="enable"`,
+	}
+
+	samplesActual = sensor.GetSensorIDs(lines)
+
+	if !reflect.DeepEqual(samplesActual, samplesExpected) {
+		t.Errorf("Comparing %q: expected\n %v\n but got\n %v\n", "IpmiGetSensorIDs VM", samplesExpected, samplesActual)
 	}
 
 }

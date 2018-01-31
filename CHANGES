@@ -1,3 +1,9 @@
+Version 2.7.9 - 2018-01-31
+- Fix ipmi detection
+- Add test cases
+- Implement new ipmi logic
+
+
 Version 2.7.8 - 2018-01-30
 - Use ipmi script instead of binary directly
 

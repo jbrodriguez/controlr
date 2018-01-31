@@ -1,0 +1,5 @@
+2018-01-31 - 2.7.9
+
+- Add test cases
+- Implement new ipmi detection logic
+- Implement new ipmi data parsing logic

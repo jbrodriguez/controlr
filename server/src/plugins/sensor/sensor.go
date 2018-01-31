@@ -23,7 +23,7 @@ const (
 
 // IdentifySensor -
 func IdentifySensor() (Kind, error) {
-	ipmi, err := checkIpmiPresence()
+	ipmi, err := CheckIpmiPresence()
 	if err != nil {
 		return NOSENSOR, err
 	}
@@ -33,7 +33,12 @@ func IdentifySensor() (Kind, error) {
 		return NOSENSOR, err
 	}
 
-	if ipmi && exists {
+	network, err := CheckNetworkEnabled()
+	if err != nil {
+		return NOSENSOR, err
+	}
+
+	if exists && (ipmi || network) {
 		return IPMI, nil
 	}
 
@@ -52,35 +57,4 @@ func IdentifySensor() (Kind, error) {
 // Sensor -
 type Sensor interface {
 	GetReadings(prefs dto.Prefs) []dto.Sample
-}
-
-func checkIpmiPresence() (bool, error) {
-	exists, err := lib.Exists("/dev/ipmi0")
-	if err != nil {
-		return false, err
-	}
-
-	if exists {
-		return true, nil
-	}
-
-	exists, err = lib.Exists("/dev/ipmi/0")
-	if err != nil {
-		return false, err
-	}
-
-	if exists {
-		return true, nil
-	}
-
-	exists, err = lib.Exists("/dev/ipmidev/0")
-	if err != nil {
-		return false, err
-	}
-
-	if exists {
-		return true, nil
-	}
-
-	return false, nil
 }

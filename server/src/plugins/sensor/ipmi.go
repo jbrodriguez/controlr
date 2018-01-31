@@ -7,8 +7,8 @@ Check LICENSE file in this folder
 package sensor
 
 import (
-	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -20,144 +20,144 @@ import (
 )
 
 const ipmiBinary = "/usr/sbin/ipmisensors"
-const ipmiConfig string = "/boot/config/plugins/ipmi/ipmi.cfg"
+const ipmiConfig = "/boot/config/plugins/ipmi/ipmi.cfg"
 
 // IpmiSensor -
 type IpmiSensor struct {
-	network  bool
-	ipaddr   string
-	user     string
-	password string
+	sensors map[string]bool
 }
 
 // NewIpmiSensor -
 func NewIpmiSensor() *IpmiSensor {
-
-	var ipaddr, user, password string
-	var network bool
-
-	file, err := ini.LoadFile(ipmiConfig)
+	lines, err := getConfig(ipmiConfig)
 	if err != nil {
-		mlog.Warning("ipmi:unable to parse config:(%s). Using defaults ...", ipmiConfig)
-	} else {
-		net, ok := file.Get("", "NETWORK")
-		if ok {
-			net = strings.Replace(net, "\"", "", -1)
-		}
-
-		network = net == "enable"
-
-		if network {
-			ipaddr, _ = file.Get("", "IPADDR")
-			ipaddr = strings.Replace(ipaddr, "\"", "", -1)
-
-			user, _ = file.Get("", "USER")
-			user = strings.Replace(user, "\"", "", -1)
-
-			pwd, _ := file.Get("", "PASSWORD")
-			pwd = strings.Replace(pwd, "\"", "", -1)
-
-			data, err := base64.StdEncoding.DecodeString(pwd)
-			if err != nil {
-				mlog.Warning("ipmi:unable to decode pwd:(%s)", err)
-				password = ""
-			} else {
-				password = string(data)
-			}
-		}
+		mlog.Warning("ipmi:unable to parse config:(%s):(%s). No sensors available", ipmiConfig, err)
 	}
+
+	sensors := GetSensorIDs(lines)
+	mlog.Info("debug:sensors(%v)", sensors)
 
 	return &IpmiSensor{
-		network:  network,
-		ipaddr:   ipaddr,
-		user:     user,
-		password: password,
+		sensors: sensors,
 	}
-
 }
 
 // GetReadings -
 func (s *IpmiSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
-	args := make([]string, 0)
+	args := []string{
+		"--comma-separated-output",
+		"--output-sensor-state",
+		"--no-header-output",
+		"--interpret-oem-data",
+	}
 
-	args = append(args, "--comma-separated-output")
-	args = append(args, "--output-sensor-state")
-	args = append(args, "--no-header-output")
-	args = append(args, "--interpret-oem-data")
-
-	// if s.network {
-	// 	args = append(args, "--always-prefix")
-	// 	args = append(args, "-h "+strconv.Quote(s.ipaddr))
-	// 	args = append(args, "-u "+strconv.Quote(s.user))
-	// 	args = append(args, "-p "+strconv.Quote(s.password))
-	// 	args = append(args, "--session-timeout=5000")
-	// 	args = append(args, "--retransmission-timeout=1000")
-	// }
-
-	// mlog.Warning("ipmi:args:(%v)", args)
-	// return make([]dto.Sample, 0)
-
-	return s.Parse(prefs, lib.GetCmdOutput(ipmiBinary, args...))
+	return s.Parse(prefs, s.sensors, lib.GetCmdOutput(ipmiBinary, args...))
 }
 
 // Parse -
-func (s *IpmiSensor) Parse(prefs dto.Prefs, lines []string) []dto.Sample {
+func (s *IpmiSensor) Parse(prefs dto.Prefs, sensors map[string]bool, lines []string) []dto.Sample {
 	samples := make([]dto.Sample, 0)
 
 	for _, line := range lines {
-		if strings.Contains(line, "CPU Temp") {
-			fields := strings.Split(line, ",")
+		fields := strings.Split(line, ",")
 
-			value := fields[4]
-
-			index := strings.IndexByte(fields[4], '.')
-			if index > 0 {
-				strVal := fields[4][0:index]
-				fVal, _ := strconv.ParseFloat(strVal, 64)
-
-				if prefs.Unit == "F" {
-					value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32))
-				} else {
-					value = fmt.Sprintf("%d", lib.Round(fVal))
-				}
-			}
-
-			sample := dto.Sample{Key: "CPU", Value: value, Unit: prefs.Unit, Condition: "neutral"}
-
-			samples = append(samples, sample)
-		} else if strings.Contains(line, "System Temp") {
-			fields := strings.Split(line, ",")
-
-			value := fields[4]
-
-			index := strings.IndexByte(fields[4], '.')
-			if index > 0 {
-				strVal := fields[4][0:index]
-				fVal, _ := strconv.ParseFloat(strVal, 64)
-
-				if prefs.Unit == "F" {
-					value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32))
-				} else {
-					value = fmt.Sprintf("%d", lib.Round(fVal))
-				}
-			}
-
-			sample := dto.Sample{Key: "BOARD", Value: value, Unit: prefs.Unit, Condition: "neutral"}
-
-			samples = append(samples, sample)
-		} else if strings.Contains(line, "FAN1") {
-			fields := strings.Split(line, ",")
-
-			value := fields[4]
-			index := strings.IndexByte(fields[4], '.')
-			if index > 0 {
-				value = fields[4][0:index]
-			}
-
-			sample := dto.Sample{Key: "FAN", Value: value, Unit: "rpm", Condition: "neutral"}
-			samples = append(samples, sample)
+		if _, ok := sensors[fields[0]]; !ok {
+			continue
 		}
+
+		value := fields[4]
+		unit := fields[5]
+
+		// if temperature or fan, remove the precision (35.00 -> 35, 1250.00 -> 1250)
+		if fields[2] == "Temperature" || fields[2] == "Fan" {
+			index := strings.IndexByte(value, '.')
+			if index > 0 {
+				value = value[0:index]
+			}
+		}
+
+		// if prefs is "F" and temperature, additionally convert appropriately
+		if prefs.Unit == "F" && fields[2] == "Temperature" {
+			fVal, _ := strconv.ParseFloat(value, 64)
+			value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32)) // probably an int(calculation) should suffice
+			unit = "F"
+		}
+
+		sample := dto.Sample{Key: fields[1], Value: value, Unit: unit, Condition: "neutral"}
+		samples = append(samples, sample)
 	}
 
 	return samples
+}
+
+// CheckIpmiPresence -
+func CheckIpmiPresence() (bool, error) {
+	exists, err := lib.Exists("/dev/ipmi0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	exists, err = lib.Exists("/dev/ipmi/0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	exists, err = lib.Exists("/dev/ipmidev/0")
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// CheckNetworkEnabled -
+func CheckNetworkEnabled() (bool, error) {
+	file, err := ini.LoadFile(ipmiConfig)
+	if err != nil {
+		return false, err
+	}
+
+	net, _ := file.Get("", "NETWORK")
+	net = strings.Replace(net, "\"", "", -1)
+
+	return net == "enable", nil
+}
+
+// GetSensorIDs -
+func GetSensorIDs(lines []string) map[string]bool {
+	sensors := make(map[string]bool)
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "DISP_SENSOR") {
+			fields := strings.Split(line, "=")           // get the value part
+			value := fields[1][1 : len(fields[1])-1]     // remove those pesky quotes
+			if n := strings.Index(value, "_"); n != -1 { // if dash is present remove the prefix
+				value = value[n+1:]
+			}
+			sensors[value] = true
+		}
+	}
+
+	return sensors
+}
+
+func getConfig(config string) ([]string, error) {
+	b, err := ioutil.ReadFile(config)
+	if err != nil {
+		return make([]string, 0), err
+	}
+
+	return strings.Split(string(b), "\n"), nil
 }
