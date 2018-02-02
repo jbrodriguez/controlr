@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jbrodriguez/mlog"
 	"github.com/jessevdk/go-flags"
 )
 
@@ -172,7 +171,7 @@ func Round(a float64) int {
 func GetCmdOutput(command string, args ...string) []string {
 	lines := make([]string, 0)
 
-	mlog.Info("debug:executing:(%s):(%v)", command, args)
+	// mlog.Info("debug:executing:(%s):(%v)", command, args)
 
 	if len(args) > 0 {
 		ShellEx(command, func(line string) {

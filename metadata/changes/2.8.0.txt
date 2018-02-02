@@ -1,0 +1,6 @@
+2018-02-02 - 2.8.0
+
+This release brings the correct implementation of ipmi handling as well as
+some minor issues with apc.
+
+Thanks to all the unRAID users that made it possible !

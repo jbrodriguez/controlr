@@ -35,7 +35,6 @@ func NewIpmiSensor() *IpmiSensor {
 	}
 
 	sensors := GetSensorIDs(lines)
-	mlog.Info("debug:sensors(%v)", sensors)
 
 	return &IpmiSensor{
 		sensors: sensors,
