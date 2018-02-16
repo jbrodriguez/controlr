@@ -1,0 +1,6 @@
+2017-10-04 - 2.3.0
+
+- Add support for unRAID 6.4.x (rc9q), using Letsencrypt generated
+certificate by default (an alternate can be specified in settings)
+
+- Add endpoint for future ControlR app releases

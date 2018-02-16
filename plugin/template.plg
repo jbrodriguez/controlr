@@ -1,0 +1,116 @@
+<?xml version='1.0' standalone='yes'?>
+
+<!DOCTYPE PLUGIN [
+<!ENTITY name        "controlr">
+<!ENTITY author      "Juan B. Rodriguez">
+<!ENTITY version     "{{version}}">
+<!ENTITY appver      "{{appver}}">
+<!ENTITY launch      "Settings/&name;">
+<!ENTITY pluginURL   "https://raw.githubusercontent.com/jbrodriguez/unraid/master/plugins/&name;.plg">
+<!ENTITY bundle      "&name;-&appver;.tgz">
+<!ENTITY md5         "{{md5}}">
+]>
+
+<PLUGIN  name="&name;"
+         author="&author;"
+         version="&version;"
+         appver="&appver;"
+         launch="&launch;"
+         pluginURL="&pluginURL;"
+>
+
+<CHANGES>
+{{changes}}
+</CHANGES>
+
+<!--
+ControlR is a companion plugin for the ControlR app.
+-->
+
+<!--
+Get the ControlR bundle.
+-->
+<FILE Name="/boot/config/plugins/&name;/&bundle;">
+<URL>"https://github.com/jbrodriguez/controlr/releases/download/&appver;/&bundle;"</URL>
+<MD5>&md5;</MD5>
+</FILE>
+
+<!-- Install default plugin cfg  -->
+<FILE Name="/boot/config/plugins/controlr/controlr.cfg">
+<INLINE>
+<![CDATA[
+SERVICE="disable"
+PORT="2378"
+CERTDIR="/boot/config/ssl/certs"
+UPS="enable"
+]]>
+</INLINE>
+</FILE>
+
+<!--
+Prepare for installation.
+-->
+<FILE Run="/bin/bash">
+<INLINE>
+running=$(pidof controlr | wc -w)
+
+# Remove emhttp files so we can re-install.
+rm -rf /usr/local/emhttp/plugins/&name;/* 2>/dev/null
+
+# Remove old 'bundle' files.
+rm -f $(ls /boot/config/plugins/&name;/&name;*.tgz 2>/dev/null | grep -v '&appver;')
+
+# Install the 'bundle'.
+tar -xf /boot/config/plugins/&name;/&bundle; -C /usr/local/emhttp/plugins
+
+# start the plugin if it was running previously
+if [ $running -eq 1 ]; then
+	/usr/local/emhttp/plugins/&name;/scripts/start
+fi
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " ControlR has been installed."
+echo " Copyright (c) &author;"
+echo " Version: &version;"
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<!--
+The 'remove' script.
+-->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+/usr/local/emhttp/plugins/&name;/scripts/stop
+# Remove all plugin files.
+rm -rf /usr/local/emhttp/plugins/&name;
+rm -rf /boot/config/plugins/&name;
+
+echo ""
+echo "-----------------------------------------------------------"
+echo " ControlR has been removed."
+echo " Copyright (c) &author;"
+echo " Version: &version;"
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<FILE Name="/tmp/controlr-chkconf" Run="/bin/bash">
+<INLINE>
+<![CDATA[
+#!/bin/sh
+# This will check each entry in the config so nothing is missing, and if missing, sets to default
+CFGFILE=/boot/config/plugins/controlr/controlr.cfg
+[ ! `cat "$CFGFILE" | grep SERVICE` ] && echo "SERVICE=\"disable\"" >> "$CFGFILE"
+[ ! `cat "$CFGFILE" | grep ^PORT` ] && echo "PORT=\"2378\"" >> "$CFGFILE"
+[ ! `cat "$CFGFILE" | grep ^CERTDIR` ] && echo "CERTDIR=\"/boot/config/ssl/certs\"" >> "$CFGFILE"
+[ ! `cat "$CFGFILE" | grep ^UPS` ] && echo "UPS=\"enable\"" >> "$CFGFILE"
+rm /tmp/controlr-chkconf
+]]>
+</INLINE>
+</FILE>
+
+</PLUGIN>

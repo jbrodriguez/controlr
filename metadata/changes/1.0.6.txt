@@ -1,0 +1,2 @@
+2016-10-31 - 1.0.6
+- Add index to support files

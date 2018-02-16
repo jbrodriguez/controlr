@@ -1,0 +1,10 @@
+2018-01-19 - 2.7.0
+
+This release adds support for the sleep feature in the ControlR app.
+It also adds ipmi-sensors support.
+
+Additional changes:
+- Fix plugin install script (remove extraneous message on server boot)
+- Adjust ssl handling for 6.4.0 stable unRAID release
+- Use date based version
+- Other bug fixes and performance improvements

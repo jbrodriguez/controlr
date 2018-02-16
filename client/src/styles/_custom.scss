@@ -1,0 +1,57 @@
+.body {
+	min-height: 100vh;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+main {
+	flex: 1;
+}
+
+.flex1 {
+	display: flex;
+	flex: 1;
+}
+
+// TABLES
+table {
+	// background: white;
+	// border: 1px solid $form-element-border;
+	table-layout: fixed;
+	width: 100%;
+}
+
+thead,
+tfoot {
+	color: #001B44;
+	// padding: $padding-default;
+}
+
+thead {
+	border-bottom: 1px solid #cccccc;
+}
+
+tfoot {
+	border-top: 1px solid cccccc;
+}
+
+tr,
+th,
+td {
+	padding-top: 1em;
+	padding-bottom: 1em;
+	font-size: 1.25em;
+}
+
+// tr,
+// th {
+// 	text-align: center;
+// }
+
+tr:nth-of-type(even) {
+	background-color: #EEEEEE;
+}
+
+th {
+	// background-color: $cement-gray;
+}

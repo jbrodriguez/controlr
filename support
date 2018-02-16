@@ -1,0 +1,74 @@
+#!/bin/bash
+
+echo "ControlR support script starting ..."
+
+if [ "$1" ]; then
+	SERVER=$1
+else
+	SERVER_DEFAULT="Tower"
+	read -p "Enter server name/address [$SERVER_DEFAULT]: " SERVER
+	SERVER=${SERVER:-$SERVER_DEFAULT}
+fi
+# echo "SERVER is $SERVER"
+
+if [ "$2" ]; then
+	PORT=$2
+else
+	PORT_DEFAULT="80"
+	read -p "Enter server port [$PORT_DEFAULT]: " PORT
+	PORT=${PORT:-$PORT_DEFAULT}
+fi
+# echo "PORT is $PORT"
+
+HTTP="http://$SERVER"
+if [ "$PORT" -ne "80" ]; then
+	HTTP="$HTTP:$PORT"
+fi
+#echo "HTTP is $HTTP"
+
+stty -echo
+read -p "Server password [none]: " PWD; echo
+stty echo
+
+AUTH="root"
+if [ -n "$PWD" ]; then
+	AUTH="root:$PWD"
+fi
+
+rm -rf controlr
+mkdir controlr
+pushd controlr
+
+# get files
+curl -X GET -u $AUTH "$HTTP/" -o index.html
+curl -X GET -u $AUTH "$HTTP/Dashboard" -o dashboard.html
+curl -X GET -u $AUTH "$HTTP/Docker" -o docker.html
+curl -X GET -u $AUTH "$HTTP/VMs" -o vms.html
+curl -X GET -u $AUTH "$HTTP/state/var.ini" -o var.ini
+curl -X GET -u $AUTH "$HTTP/state/disks.ini" -o disks.ini
+curl -X GET -u $AUTH "$HTTP/state/shares.ini" -o shares.ini
+curl -X GET -u $AUTH "$HTTP/state/users.ini" -o users.ini
+
+# remove registration info
+awk '!/regFILE=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regGUID=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regTy=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regTo=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regTm=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regTm2=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/regGen=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/flashGUID=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/flashProduct=/' var.ini > var.tmp && mv var.tmp var.ini
+awk '!/flashVendor=/' var.ini > var.tmp && mv var.tmp var.ini
+
+# remove disks serial info
+perl -pi -e 's/id=\"(.*?)\"/id=\"generic\"/g' disks.ini
+perl -pi -e 's/idSb=\"(.*?)\"/idSb=\"generic\"/g' disks.ini
+
+popd
+
+# create zip file
+zip -r controlr.zip controlr
+
+echo "ControlR support script finished"
+echo "Please send controlr.zip to the support email"

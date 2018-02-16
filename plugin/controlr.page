@@ -1,0 +1,97 @@
+Menu="Utilities"
+Icon="controlr.png"
+Title="ControlR"
+---
+<?php
+$sName = "controlr";
+$controlr_cfg = parse_plugin_cfg("controlr");
+$controlr_service = isset($controlr_cfg['SERVICE']) ? $controlr_cfg['SERVICE'] 	: "disable";
+$controlr_port = (isset($controlr_cfg['PORT']) && is_numeric($controlr_cfg['PORT']) && $controlr_cfg['PORT'] > 0 && $controlr_cfg['PORT'] < 65535 ) ? $controlr_cfg['PORT'] : "2378";
+$controlr_certdir = isset($controlr_cfg['CERTDIR']) ? $controlr_cfg['CERTDIR'] 	: "/boot/config/ssl/certs";
+$controlr_ups = isset($controlr_cfg['UPS']) ? $controlr_cfg['UPS'] 	: "enable";
+$controlr_running = shell_exec("pidof controlr | wc -w");
+$controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION | tr '\n' ' '");
+?>
+
+<script type="text/javascript">
+	var port = <?=$controlr_port;?>;
+	var url = document.location.protocol + '//' + document.location.hostname + ':' + port + '/';
+	var isRunning = <?=$controlr_running;?> === 1;
+	var version = '<?=$controlr_version;?>';
+	if (isRunning) {
+		document.write("<a style='color:green;' target='_blank' href='" + url + "' title='ControlR plugin'><b>Open Web UI ( v" + version + ")</b></a>");
+	} else {
+		document.write("<b><font style='color:orange;'>ControlR v" + version + "</font></b>")
+	}
+</script>
+
+<form markdown="1" name="controlr_settings" method="POST" action="/update.php" target="progressFrame">
+<input type="hidden" name="#file" value="controlr/controlr.cfg" />
+<input type="hidden" id="command" name="#command" value="" />
+
+Enable ControlR Server :
+: <select id="SERVICE" name="SERVICE" size="1" onChange="checkRUNNING(this.form);">
+  <?=mk_option($controlr_service, "disable", "No");?>
+  <?=mk_option($controlr_service, "enable", "Yes");?>
+  </select>
+
+Port :
+: <input id="PORT" type="text" class="stopped" name="PORT" maxlength="40" value="<?=$controlr_port;?>" title="port must be 0-65535" placeholder="Default Port is 2378" >
+
+Cert Dir (don't use, will be deprecated):
+: <input id="CERTDIR" type="text" class="stopped" name="CERTDIR" maxlength="40" value="<?=$controlr_certdir;?>" title="" placeholder="/boot/config/ssl/certs" >
+
+Provide UPS status :
+: <select id="UPS" name="UPS" size="1" onChange="checkRUNNING(this.form);">
+  <?=mk_option($controlr_ups, "enable", "Yes");?>
+  <?=mk_option($controlr_ups, "disable", "No");?>
+  </select>
+
+<input id="DEFAULT" class="stopped" type="submit" value="Default" onClick="resetDATA(this.form)">
+: <input id="btnApply" type="submit" value="Apply" onClick="verifyDATA(this.form)"><input type="button" value="Done" onClick="done()">
+</form>
+
+<script type="text/javascript">
+$(function(){
+	showStatus('<?=$sName;?>');
+	checkRUNNING(document.controlr_settings);
+});
+
+function resetDATA(form) {
+	form.PORT.value = "2378";
+	form.CERTDIR.value = "/boot/config/ssl/certs";
+	form.UPS.value = "enable"
+}
+
+function checkRUNNING(form) {
+	if (<?=$controlr_running;?> == 1)
+	{
+		$(".stopped").prop("disabled", true);
+		form.btnApply.disabled = "disabled";
+   }
+   else
+	$(".stopped").prop("disabled", (form.SERVICE.value == "enable"));
+	if (form.SERVICE.value == "enable")
+		form.command.value = "/usr/local/emhttp/plugins/controlr/scripts/start";
+	else {
+		form.command.value = "/usr/local/emhttp/plugins/controlr/scripts/stop";
+		form.btnApply.disabled = (form.SERVICE.value == "enable");
+	}
+}
+
+function verifyDATA(form) {
+	if (isNumber(form.PORT.value)){
+		if (form.PORT.value < 0 || form.PORT.value > 65535){
+			form.PORT.value = "2378";
+		}
+	} else {
+		form.PORT.value = "2378";
+	}
+
+	form.SERVICE.value = form.SERVICE.value.replace(/ /g,"_");
+	form.PORT.value = form.PORT.value.replace(/ /g,"_");
+	form.UPS.value = form.UPS.value.replace(/ /g,"_");
+	// form.CERTDIR.value = form.CERTDIR.value.replace(/ /g,"_");
+}
+
+</script>

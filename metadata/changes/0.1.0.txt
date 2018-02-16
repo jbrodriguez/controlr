@@ -1,0 +1,23 @@
+Version 0.1.0 - 2016-10-18
+- Initial commit
+- Basic server code and workflow
+- Factor out getting unRAID api data
+- Make api folder configurable
+- Enable jwt authentication and directed replies
+- Implement unRAID authentication
+- Solve lint issue
+- Enable ctags
+- Minor changes
+- Basic UI setup
+- Modify server code to accomodate client changes
+- Add login error handling
+- First iteration of home page UX
+- Add routing to client code
+- Fix api call
+- Adjust client code
+- Adjust server code
+- Implement basic login/logout functionality
+- Implement basic data websocket transport
+- Implement basic permissions interaction
+- Make UI functional
+- Enable support for previous versions

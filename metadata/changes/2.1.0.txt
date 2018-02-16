@@ -1,0 +1,8 @@
+2017-06-27 - 2.1.0
+
+This release should become stable now, supporting unRAID 6.4.x
+
+The following changes were made:
+- Fix issue with multiple emhttp invocations
+- Fix issue with self signed certs
+- Other improvements and bug fixes

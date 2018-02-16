@@ -1,0 +1,6 @@
+2017-06-23 - 2.0.5
+
+This should fix the issue with the UI link in the Settings page
+of unRAID's webGui.
+
+Additionally, a minor fix for the mixed content bug was added.

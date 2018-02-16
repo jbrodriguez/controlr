@@ -1,0 +1,320 @@
+Version 2.9.1 - 2018-02-16
+- Fix release scripts
+
+
+Version 2.9.0 - 2018-02-16
+- Initial working version (client/vue)
+- Ignore cache folder
+- Implement vuejs client-side
+- Fix ipmi sensor detection
+
+
+Version 2.8.0 - 2018-02-02
+- Remove debug logging
+
+
+Version 2.7.9 - 2018-01-31
+- Fix ipmi detection
+- Add test cases
+- Implement new ipmi logic
+
+
+Version 2.7.8 - 2018-01-30
+- Use ipmi script instead of binary directly
+
+
+Version 2.7.7 - 2018-01-30
+- Remove ipmi sampling
+
+
+Version 2.7.6 - 2018-01-30
+- Enable ipmi data refresh
+
+
+Version 2.7.5 - 2018-01-29
+- Fix bump-hook script
+- Fix apcaccess invocation
+
+
+Version 2.7.4 - 2018-01-29
+- Add debug logging
+
+
+Version 2.7.3 - 2018-01-26
+- Quote ipmi-sensor params
+- Use main ssl config file
+
+
+Version 2.7.2 - 2018-01-22
+- Fix startup issue
+
+
+Version 2.7.1 - 2018-01-19
+- Fix plugin start script
+
+
+Version 2.7.0 - 2018-01-19
+- Add date based plugin version
+- Fix plugin install script
+- Add sleep support
+- Fix go lint errors
+- Add ipmi sensor support
+- Fix golint issues
+- Improve plugins creation logic
+- Replace available with features field
+- Fix ssl handling
+- Improve ipmi sensor detection
+- Improve install script
+- Add ipmi config support
+- Use date based version
+
+
+Version 2.6.1 - 2017-11-08
+- Fix plugin invocation
+
+
+Version 2.6.0 - 2017-11-08
+- Enable optional UPS status display
+- Refactor model to plugin
+- Refactor into separate package
+- Move function into common library
+- Implement system sensor scanning
+- Use new plugin logic
+- Create tests for sensor logic
+
+
+Version 2.5.1 - 2017-10-27
+- Change folder location
+- Fix CI script
+- Fix parsing of config file
+
+
+Version 2.5.0 - 2017-10-25
+- Split wake and prefs into their own files
+- Create samples data structure
+- Update info structure
+- Add shell invocation with command parameters
+- Implement UPS support
+- Add tests for ups parsing
+- Rename ups to samples in dto
+- Fix import path
+
+
+Version 2.4.0 - 2017-10-08
+- Optimize info endpoint
+- Switch to code to write release messages
+
+
+Version 2.3.0 - 2017-10-04
+- Restructure code architecture
+- Replace yarn with npm5
+- Fix template
+- Upgrade server packages
+- Allow testing
+- Hide echo banners
+- Upgrade node-sass/sass-loader
+- Fix CI instructions
+- Add explicit websocket dependency
+- Fix function signature1
+- Fix CI instructions
+- Hide labstack/echo banner
+- Fix protocol detection
+- Declare dto for info endpoint
+- Fold mac/prefs endpoints into info endpoint
+- Support unRAID 6.4.x (rc9q)
+- Restore legacy endpoints for compatibility
+
+
+Version 2.2.0 - 2017-08-02
+- Implement GUI prefs lookup
+
+
+Version 2.1.0 - 2017-06-27
+- Fix issue with multiple emhttp invocations
+- Display error message
+- Fix issue with self signed certs
+- Fix mobx deprecation warnings
+
+
+Version 2.0.5 - 2017-06-23
+- Fix incorrect protocol comparison
+
+
+Version 2.0.4 - 2017-06-23
+- Fix hostname detection
+
+
+Version 2.0.3 - 2017-06-23
+- Fix issue with unescaped entities
+
+
+Version 2.0.2 - 2017-06-20
+- Fix mixed content error
+- Adjust port detection
+- Mirror emhttp in terms of which port to run on
+- Improve detection of host details
+
+
+Version 2.0.1 - 2017-06-16
+- FIx unRAID UI issues
+
+
+Version 2.0.0 - 2017-06-15
+- Implement updated actor architecture
+- Upgrade packages
+- Adjust for new echo api
+- Add missing function call
+- Improve port detection
+- Modify jwt secret generation
+- Set proper api endpoint
+- Add https ports to settings
+- Remove middleware usage
+- Fix api responses
+- Auto Generate TLS certificates
+- Add/Update packages
+- Add eslint configuration
+- Lint code
+- Add config prettier package
+- Add flag handling pckage
+- Adjust port detection logic for 6.4-rc3 new api
+- Return error if port detection fails
+- Fix port detection logic
+- Add test for new port detection logic
+- Remove log package usage
+- Remove line breaks
+- Add logging info
+- Rename variable
+
+
+Version 1.2.3 - 2017-03-20
+- Fix bundle script
+
+
+Version 1.2.2 - 2017-03-20
+- Fix start script invocation
+
+
+Version 1.2.1 - 2017-03-17
+- Start the plugin on install (if it was running)
+
+
+Version 1.2.0 - 2017-03-08
+- Add endpoint to obtain mac address
+
+
+Version 1.1.5 - 2017-02-02
+- Accept requests with no password set
+- Support 6.3.0-rc9
+
+
+Version 1.1.4 - 2017-01-06
+- Fix import path
+
+
+Version 1.1.3 - 2017-01-06
+- Fix package dependency
+
+
+Version 1.1.2 - 2017-01-06
+- Add debug endpoint
+- Make publish script server agnostic
+- Remove support script
+
+
+Version 1.1.1 - 2016-11-10
+- Check for log presence before accessing it
+- Replace Gitlab CI with cix
+
+
+Version 1.1.0 - 2016-11-08
+- Create api endpoint to support ControlR app
+
+
+Version 1.0.6 - 2016-10-31
+- Add index to support files
+
+
+Version 1.0.5 - 2016-10-31
+- Add support script
+
+
+Version 1.0.4 - 2016-10-30
+- Modify logic to create release plugin
+
+
+Version 1.0.3 - 2016-10-28
+- Keep sim data inside our project
+- Cosmetic fixes to UI
+- Add flag to bypass authentication
+- Add logging
+- Return empty arrays for users/apps
+- Test encryption
+
+
+Version 1.0.2 - 2016-10-27
+- Add support for other encryption types
+- Fix lint issue
+- Process the perm change only if a user exists
+- Add message about adding users
+
+
+Version 1.0.1 - 2016-10-26
+- Make log to file as the default
+- Fix property name
+
+
+Version 1.0.0 - 2016-10-25
+- Improve script logic
+- Upload binary to github using fastlane
+- Update plugin metadata
+- Replace fastlane/github with github-release
+- Push unraid ControlR plugin
+- Implement initial version of Home page
+- Remove release scripts from test env
+- Remove package no longer required
+- Clean up code
+- Add operations definitions
+- Add README
+- Remove fastlane
+- Remove code no longer required
+- Clean up server code
+
+
+Version 0.3.0 - 2016-10-20
+- Remove content with incorrect syntax
+
+
+Version 0.2.0 - 2016-10-20
+- Create devops orchestration
+- Implement updateUser operation
+- Make it work on the server
+- Initial cleanup
+- Prepare for readiness
+- Create plugin bundle
+- Create bump-hook to add some metadata
+- Automate plugin deployment
+
+
+Version 0.1.0 - 2016-10-18
+- Initial commit
+- Basic server code and workflow
+- Factor out getting unRAID api data
+- Make api folder configurable
+- Enable jwt authentication and directed replies
+- Implement unRAID authentication
+- Solve lint issue
+- Enable ctags
+- Minor changes
+- Basic UI setup
+- Modify server code to accomodate client changes
+- Add login error handling
+- First iteration of home page UX
+- Add routing to client code
+- Fix api call
+- Adjust client code
+- Adjust server code
+- Implement basic login/logout functionality
+- Implement basic data websocket transport
+- Implement basic permissions interaction
+- Make UI functional
+- Enable support for previous versions
