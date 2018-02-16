@@ -1,0 +1,8 @@
+2018-02-16 - 2.9.1
+
+This release implements a rewrite of the permissions webUI (new framework),
+although visually it remains mostly the same.
+
+Other changes:
+- Fix issue with checking permissions in UI
+- Fix ipmi sensor detection

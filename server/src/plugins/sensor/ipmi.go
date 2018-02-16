@@ -123,6 +123,15 @@ func CheckIpmiPresence() (bool, error) {
 
 // CheckNetworkEnabled -
 func CheckNetworkEnabled() (bool, error) {
+	exists, err := lib.Exists(ipmiConfig)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, nil
+	}
+
 	file, err := ini.LoadFile(ipmiConfig)
 	if err != nil {
 		return false, err

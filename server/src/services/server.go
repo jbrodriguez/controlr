@@ -98,6 +98,7 @@ func (s *Server) Start() {
 
 	s.engine.Use(mw.Logger())
 	s.engine.Use(mw.Recover())
+	s.engine.Use(mw.CORS())
 	// s.engine.Use(mw.StaticWithConfig(mw.StaticConfig{
 	// 	// Root:  location,
 	// 	HTML5: true,

@@ -146,25 +146,31 @@ func (c *Core) refresh(msg *pubsub.Message) {
 	go func() {
 		_dockers, err := lib.Get(c.client, c.state.Host, "/Docker")
 		if err != nil {
-			mlog.Warning("Unable to get dockers: %s", err)
-			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: fmt.Sprintf("Unable to get unRAID state (dockers): %s", err)}
+			message := fmt.Sprintf("Unable to get unRAID state (dockers): %s", err)
+			mlog.Warning(message)
+			payload := dto.Feedback{Code: 1001, Msg: message}
+			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: payload}
 			c.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
 			return
 		}
 
 		_vms, err := lib.Get(c.client, c.state.Host, "/VMs")
 		if err != nil {
-			mlog.Warning("Unable to get vms: %s", err)
-			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: fmt.Sprintf("Unable to get unRAID state (vms): %s", err)}
+			message := fmt.Sprintf("Unable to get unRAID state (vms): %s", err)
+			mlog.Warning(message)
+			payload := dto.Feedback{Code: 1002, Msg: message}
+			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: payload}
 			c.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
 			return
 		}
 
 		_users, err := lib.Get(c.client, c.state.Host, "/state/users.ini")
 		if err != nil {
-			mlog.Warning("Unable to get users.ini: %s", err)
-			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: fmt.Sprintf("Unable to get unRAID state (users): %s", err)}
-			c.bus.Pub(&pubsub.Message{Payload: outbound}, "socket:broadcast")
+			message := fmt.Sprintf("Unable to get unRAID state (users): %s", err)
+			mlog.Warning(message)
+			payload := dto.Feedback{Code: 1003, Msg: message}
+			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: payload}
+			c.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
 			return
 		}
 
@@ -194,9 +200,11 @@ func (c *Core) updateUser(msg *pubsub.Message) {
 
 	_, err := lib.Post(c.client, c.state.Host, "/update.htm", data)
 	if err != nil {
-		mlog.Warning("Unable to post updateUser: %s", err)
-		outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: "Unable to update User"}
-		c.bus.Pub(&pubsub.Message{Payload: outbound}, "socket:broadcast")
+		message := fmt.Sprintf("Unable to get update user: %s", err)
+		mlog.Warning(message)
+		payload := dto.Feedback{Code: 1004, Msg: message}
+		outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: payload}
+		c.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
 		return
 	}
 
