@@ -8,4 +8,4 @@ dist
 release
 *.tgz
 controlr.plg
-
+.cache
