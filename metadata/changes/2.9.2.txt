@@ -1,0 +1,3 @@
+2018-03-21 - 2.9.2
+
+- Add support for unRAID 6.5.0

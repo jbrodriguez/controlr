@@ -144,7 +144,10 @@ func (c *Core) Stop() {
 // PLUGIN APP HANDLERS
 func (c *Core) refresh(msg *pubsub.Message) {
 	go func() {
-		_dockers, err := lib.Get(c.client, c.state.Host, "/Docker")
+		dckURL := c.manager.GetDockerURL()
+		vmURL := c.manager.GetVMURL()
+
+		_dockers, err := lib.Get(c.client, c.state.Host, dckURL)
 		if err != nil {
 			message := fmt.Sprintf("Unable to get unRAID state (dockers): %s", err)
 			mlog.Warning(message)
@@ -154,7 +157,7 @@ func (c *Core) refresh(msg *pubsub.Message) {
 			return
 		}
 
-		_vms, err := lib.Get(c.client, c.state.Host, "/VMs")
+		_vms, err := lib.Get(c.client, c.state.Host, vmURL)
 		if err != nil {
 			message := fmt.Sprintf("Unable to get unRAID state (vms): %s", err)
 			mlog.Warning(message)
