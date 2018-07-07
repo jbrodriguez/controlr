@@ -11,7 +11,8 @@
 		<div class="bg-light-gray pa1">
 		<li class="row middle-xs">
 			<div class="col-xs-12 col-sm-10">
-				<welcome v-if="isAuthorized" /><login v-else />
+				<div v-if="isAuthorized"><welcome v-show="isAuthorized" /></div>
+				<div v-else><login v-show="!isAuthorized" /></div>
 			</div>
 
 			<div class="col-xs-12 col-sm-1">

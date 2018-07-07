@@ -8,7 +8,7 @@
 	"scripts": {
 		"dev": "parcel index.html",
 		"watch": "parcel watch index.html",
-		"build": "parcel build index.html --public-url ./app",
+		"build": "parcel build index.html --public-url ./app --no-source-maps --no-minify",
 		"clean": "rimraf .cache dist"
 	},
 	"browserslist": [
@@ -18,22 +18,25 @@
 	],
 	"devDependencies": {
 		"@types/websocket": "^0.0.36",
+		"@vue/component-compiler-utils": "^2.1.0",
 		"babel-preset-env": "^1.6.0",
 		"babel-preset-stage-3": "^6.24.1",
 		"cross-env": "^5.0.5",
 		"express": "^4.16.2",
 		"http-proxy-middleware": "^0.17.4",
-		"parcel-bundler": "parcel-bundler/parcel#vue",
+		"parcel-bundler": "^1.9.4",
 		"rimraf": "^2.6.2",
 		"tslint": "^5.9.1",
 		"typescript": "^2.7.1",
-		"vue": "^2.5.13",
-		"vue-router": "^3.0.1",
-		"vuex": "^3.0.1",
-		"vuex-router-sync": "^5.0.0"
+		"vue-template-compiler": "^2.5.16"
 	},
 	"dependencies": {
 		"flexboxgrid": "^6.3.1",
-		"tachyons": "^4.9.1"
+		"tachyons": "^4.9.1",
+		"vue": "^2.5.16",
+		"vue-hot-reload-api": "^2.3.0",
+		"vue-router": "^3.0.1",
+		"vuex": "^3.0.1",
+		"vuex-router-sync": "^5.0.0"
 	}
 }
