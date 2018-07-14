@@ -154,7 +154,7 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 		secure = false
 		port, _ = file.Get("", "emhttpPort")
 		port = strings.Replace(port, "\"", "", -1)
-	} else if usessl == "no" || usessl == "auto" {
+	} else if usessl == "no" {
 		secure = false
 	}
 

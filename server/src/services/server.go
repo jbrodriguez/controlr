@@ -5,19 +5,22 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"controlr/plugin/server/src/dto"
 	"controlr/plugin/server/src/lib"
 	"controlr/plugin/server/src/model"
-	"controlr/plugin/server/src/net"
+	"controlr/plugin/server/src/ntk"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jbrodriguez/actor"
@@ -46,7 +49,7 @@ type Server struct {
 	engine *echo.Echo
 	actor  *actor.Actor
 
-	pool   map[uint64]*net.Connection
+	pool   map[uint64]*ntk.Connection
 	state  *model.State
 	secret string
 
@@ -59,10 +62,31 @@ func NewServer(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *
 		bus:      bus,
 		settings: settings,
 		actor:    actor.NewActor(bus),
-		pool:     make(map[uint64]*net.Connection),
+		pool:     make(map[uint64]*ntk.Connection),
 		state:    state,
 	}
 	return server
+}
+
+func redirector(sPort string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			req, scheme := c.Request(), c.Scheme()
+			host, _, err := net.SplitHostPort(req.Host)
+			if err != nil {
+				log.Printf("err(%s)", err)
+				return next(c)
+			}
+
+			// log.Printf("host(%s)-port(%s)-scheme(%s)-uri(%s)\n", host, port, scheme, req.RequestURI)
+
+			if scheme != "https" {
+				return c.Redirect(http.StatusMovedPermanently, "https://"+host+sPort+req.RequestURI)
+			}
+
+			return next(c)
+		}
+	}
 }
 
 // Start service
@@ -92,6 +116,14 @@ func (s *Server) Start() {
 	h := sha256.Sum256([]byte(s.state.Name + s.state.Timezone + s.state.Version + s.state.CsrfToken))
 	s.secret = base64.StdEncoding.EncodeToString(h[:])
 
+	// port for https is port for http + 1
+	var iPort int
+	var err error
+	if iPort, err = strconv.Atoi(s.settings.Port[:1]); err != nil {
+		iPort = 2378
+	}
+	sPort := fmt.Sprintf(":%d", iPort+1)
+
 	s.engine = echo.New()
 
 	s.engine.HideBanner = true
@@ -99,6 +131,9 @@ func (s *Server) Start() {
 	s.engine.Use(mw.Logger())
 	s.engine.Use(mw.Recover())
 	s.engine.Use(mw.CORS())
+	if s.state.Secure {
+		s.engine.Use(redirector(sPort))
+	}
 	// s.engine.Use(mw.StaticWithConfig(mw.StaticConfig{
 	// 	// Root:  location,
 	// 	HTML5: true,
@@ -127,28 +162,29 @@ func (s *Server) Start() {
 
 	targetURL, _ := url.Parse(s.state.Host)
 
+	// Always listen on http port, but based on above setting, we could be redirecting to https
+	go func() {
+		err := s.engine.Start(s.settings.Port)
+		if err != nil {
+			mlog.Fatalf("Unable to start http server: %s", err)
+		}
+	}()
+
+	mlog.Info("Server started listening http on %s", s.settings.Port)
+
 	if s.state.Secure {
 		s.proxy = CreateReverseProxy(targetURL)
 
 		go func() {
-			err := s.engine.StartTLS(s.settings.Port, filepath.Join(s.settings.CertDir, s.state.Cert), filepath.Join(s.settings.CertDir, s.state.Cert))
+			err := s.engine.StartTLS(sPort, filepath.Join(s.settings.CertDir, s.state.Cert), filepath.Join(s.settings.CertDir, s.state.Cert))
 			if err != nil {
 				mlog.Fatalf("Unable to start https server: %s", err)
 			}
 		}()
 
-		mlog.Info("Server started listening https on %s", s.settings.Port)
+		mlog.Info("Server started listening https on %s", sPort)
 	} else {
 		s.proxy = httputil.NewSingleHostReverseProxy(targetURL)
-
-		go func() {
-			err := s.engine.Start(s.settings.Port)
-			if err != nil {
-				mlog.Fatalf("Unable to start http server: %s", err)
-			}
-		}()
-
-		mlog.Info("Server started listening http on %s", s.settings.Port)
 	}
 }
 
@@ -249,7 +285,7 @@ func (s *Server) handleWs(c echo.Context) (err error) {
 		claims := user.Claims.(jwt.MapClaims)
 		id := uint64(claims["id"].(float64))
 
-		conn := net.NewConnection(id, ws, s.onMessage, s.onClose)
+		conn := ntk.NewConnection(id, ws, s.onMessage, s.onClose)
 		s.pool[id] = conn
 		if err := conn.Read(); err != nil {
 			mlog.Warning("error reading from connection: %s", err)
@@ -264,7 +300,7 @@ func (s *Server) onMessage(packet *dto.Packet) {
 	s.bus.Pub(&pubsub.Message{Id: packet.ID, Payload: packet.Payload}, packet.Topic)
 }
 
-func (s *Server) onClose(c *net.Connection, err error) {
+func (s *Server) onClose(c *ntk.Connection, err error) {
 	if _, ok := s.pool[c.ID]; ok {
 		delete(s.pool, c.ID)
 	}
