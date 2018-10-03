@@ -16,6 +16,6 @@ func NewNoSensor() *NoSensor {
 }
 
 // GetReadings -
-func (n *NoSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
+func (n *NoSensor) GetReadings(_ dto.Prefs) []dto.Sample {
 	return n.samples
 }

@@ -79,25 +79,19 @@ func (a *API) Start() {
 	r.GET("/mac", a.getMac)
 	r.GET("/prefs", a.getPrefs)
 
-	if a.state.Secure {
-		go func() {
-			err := a.engine.StartTLS(a.settings.APIPort, filepath.Join(a.settings.CertDir, a.state.Cert), filepath.Join(a.settings.CertDir, a.state.Cert))
-			if err != nil {
-				mlog.Fatalf("Unable to start https api: %s", err)
-			}
-		}()
+	go func() {
+		var err error
+		if a.state.UseSelfCerts {
+			err = a.engine.StartTLS(a.settings.APIPort, filepath.Join(a.settings.CertDir, "controlr_cert.pem"), filepath.Join(a.settings.CertDir, "controlr_key.pem"))
+		} else {
+			err = a.engine.StartTLS(a.settings.APIPort, filepath.Join(a.settings.CertDir, a.state.Cert), filepath.Join(a.settings.CertDir, a.state.Cert))
+		}
+		if err != nil {
+			mlog.Fatalf("Unable to start https api: %s", err)
+		}
+	}()
 
-		mlog.Info("Api started listening https on %s", a.settings.APIPort)
-	} else {
-		go func() {
-			err := a.engine.Start(a.settings.APIPort)
-			if err != nil {
-				mlog.Fatalf("Unable to start http api: %s", err)
-			}
-		}()
-
-		mlog.Info("Api started listening http on %s", a.settings.APIPort)
-	}
+	mlog.Info("Api started listening https on %s", a.settings.APIPort)
 }
 
 // Stop service

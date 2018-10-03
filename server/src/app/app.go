@@ -143,6 +143,14 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	portssl = strings.Replace(portssl, "\"", "", -1)
 
 	state.Cert = getCertificateName(certDir, state.Name)
+	state.UseSelfCerts = false
+	if state.Cert == "" {
+		if err := provisionSelfCerts(certDir, state.Name); err != nil {
+			return nil, err
+		}
+
+		state.UseSelfCerts = true
+	}
 
 	secure := state.Cert != ""
 
@@ -206,4 +214,24 @@ func getCertificateName(certDir, name string) string {
 	}
 
 	return ""
+}
+
+func provisionSelfCerts(certDir, name string) error {
+	certExists, err := lib.Exists(filepath.Join(certDir, "controlr_cert.pem"))
+	if err != nil {
+		mlog.Warning("unable to check for cert presence:(%s)", err)
+		return err
+	}
+
+	keyExists, err := lib.Exists(filepath.Join(certDir, "controlr_key.pem"))
+	if err != nil {
+		mlog.Warning("unable to check for key presence:(%s)", err)
+		return err
+	}
+
+	if certExists && keyExists {
+		return nil
+	}
+
+	return lib.GenerateCerts(name, certDir)
 }

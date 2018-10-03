@@ -1,14 +1,22 @@
 package lib
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jessevdk/go-flags"
 )
@@ -184,4 +192,66 @@ func GetCmdOutput(command string, args ...string) []string {
 	}
 
 	return lines
+}
+
+// GenerateCerts - ControlR auto generated TLS cert
+func GenerateCerts(name, location string) error {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return err
+	}
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return err
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Country:            []string{"PA"},
+			Organization:       []string{"Apertoire"},
+			OrganizationalUnit: []string{"ControlR"},
+		},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(10, 0, 0),
+
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	names := []string{"localhost", name, fmt.Sprintf("%s.local", name)}
+	for _, n := range names {
+		template.DNSNames = append(template.DNSNames, n)
+	}
+
+	template.EmailAddresses = []string{fmt.Sprintf("root@%s", name)}
+
+	// template.DNSNames = append(template.DNSNames, "localhost")
+
+	cert, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+	if err != nil {
+		return fmt.Errorf("x590.CreateCertificate: %s", err)
+	}
+
+	privDER, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		return fmt.Errorf("x509.MarshalPKCS8PrivateKey: %s", err)
+	}
+
+	err = ioutil.WriteFile(filepath.Join(location, "controlr_key.pem"), pem.EncodeToMemory(
+		&pem.Block{Type: "PRIVATE KEY", Bytes: privDER}), 0600)
+	if err != nil {
+		return fmt.Errorf("key.WriteFile: %s", err)
+	}
+
+	err = ioutil.WriteFile(filepath.Join(location, "controlr_cert.pem"), pem.EncodeToMemory(
+		&pem.Block{Type: "CERTIFICATE", Bytes: cert}), 0644)
+	if err != nil {
+		return fmt.Errorf("certificate.WriteFile: %s", err)
+	}
+
+	return nil
 }

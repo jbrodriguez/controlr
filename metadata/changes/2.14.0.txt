@@ -1,0 +1,9 @@
+2018-10-03 - 2.13.0
+
+This release always starts the api endpoint on https.
+
+Other changes:
+- Remove $GOPATH from stack trace
+- Go lint (revive)
+- Fix Go lint errors
+

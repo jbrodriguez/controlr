@@ -115,7 +115,7 @@ func (c *Core) Start() error {
 					c.info.Prefs = _getPrefs()
 				}
 			case err3 := <-c.watcher.Errors:
-				mlog.Warning("Error:", err3)
+				mlog.Warning("Error: %s", err3)
 			}
 		}
 	}()

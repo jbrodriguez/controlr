@@ -300,7 +300,7 @@ func (s *Server) onMessage(packet *dto.Packet) {
 	s.bus.Pub(&pubsub.Message{Id: packet.ID, Payload: packet.Payload}, packet.Topic)
 }
 
-func (s *Server) onClose(c *ntk.Connection, err error) {
+func (s *Server) onClose(c *ntk.Connection, _ error) {
 	if _, ok := s.pool[c.ID]; ok {
 		delete(s.pool, c.ID)
 	}
