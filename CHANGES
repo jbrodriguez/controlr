@@ -1,3 +1,7 @@
+Version 2.15.0 - 2019-02-08
+- Add support for 6.7.x
+
+
 Version 2.14.0 - 2018-10-03
 - Remove $GOPATH from stack trace
 - Go lint (revive)
