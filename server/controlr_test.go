@@ -1,9 +1,9 @@
 package main
 
 import (
-	"controlr/plugin/server/src/dto"
-	"controlr/plugin/server/src/plugins/sensor"
-	"controlr/plugin/server/src/plugins/ups"
+	"plugin/dto"
+	"plugin/plugins/sensor"
+	"plugin/plugins/ups"
 	"fmt"
 	"os"
 	"reflect"

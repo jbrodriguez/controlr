@@ -1,0 +1,8 @@
+2019-03-28 - 2.16.0
+
+Some improvements / bug fixes:
+
+- Improved user experience (no more `mini game` 😁)
+- UI improvements
+- Log certificate detection
+- Fix protocol handling

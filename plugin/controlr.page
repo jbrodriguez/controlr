@@ -15,6 +15,10 @@ $controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION |
 
 <script type="text/javascript">
 	var port = <?=$controlr_port;?>;
+	if (document.location.protocol === 'https:') {
+		var iport = +port + 1
+		port = iport.toString()
+	}
 	var url = document.location.protocol + '//' + document.location.hostname + ':' + port + '/';
 	var isRunning = <?=$controlr_running;?> === 1;
 	var version = '<?=$controlr_version;?>';

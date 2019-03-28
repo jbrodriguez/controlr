@@ -1,3 +1,14 @@
+Version 2.16.0 - 2019-03-28
+- Implement Go modules
+- Implement vue-cli 3.x
+- Upgrade front end dependencies
+- Implement new logic
+- UI improvements
+- Fix Unraid logo color
+- Fix protocol handling
+- Log certificate detection
+
+
 Version 2.15.0 - 2019-02-08
 - Add support for 6.7.x
 

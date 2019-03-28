@@ -32,11 +32,11 @@ clean:
 # run formatting tool and build
 build: dependencies clean
 	go build fmt
-	go build -ldflags "-X main.Version=$(mb_version)-$(mb_count)-$(mb_hash)-$(mb_plgver)" -gcflags "all=-trimpath=$GOPATH" -v -o controlr controlr.go
+	go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o controlr controlr.go
 
 server: dependencies clean
 	go build fmt
-	env GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(mb_version)-$(mb_count)-$(mb_hash)-$(mb_plgver)" -gcflags "all=-trimpath=$GOPATH" -v -o ../dist/controlr controlr.go
+	env GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o ../dist/controlr controlr.go
 
 # run unit tests with code coverage
 test: dependencies
