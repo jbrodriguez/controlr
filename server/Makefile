@@ -16,30 +16,26 @@ mb_plgver := $(shell cat ../PLGVER)
 PROG = controlr
 
 # targets not associated with files
-.PHONY: dependencies default build test coverage clean kill restart serve
-
- # check we have a couple of dependencies
-dependencies:
-	@command -v fswatch --version >/dev/null 2>&1 || { printf >&2 "fswatch is not installed, please run: brew install fswatch\n"; exit 1; }
+.PHONY: default build test coverage clean kill restart serve
 
 # default targets to run when only running `make`
-default: dependencies test
+default: test
 
 # clean up
 clean:
 	go clean
 
 # run formatting tool and build
-build: dependencies clean
+build: clean
 	go build fmt
 	go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o controlr controlr.go
 
-server: dependencies clean
+server: clean
 	go build fmt
 	env GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o ../dist/controlr controlr.go
 
 # run unit tests with code coverage
-test: dependencies
+test:
 	go test -v
 
 # generate code coverage report
@@ -47,8 +43,8 @@ coverage: test
 	go build test -coverprofile=.coverage.out
 	go build tool cover -html=.coverage.out
 
-publish: dependencies client server
+publish: client server
 	rsync -avzP -e "ssh" dist/* $(SERVER):/usr/local/emhttp/plugins/controlr
 
-deploy: dependencies server
+deploy: server
 	rsync -avzP -e "ssh" dist/* $(SERVER):/usr/local/emhttp/plugins/controlr

@@ -60,7 +60,6 @@ func (a *API) Start() {
 
 			if len(auth) > l+1 && auth[:l] == basic {
 				if auth[l+1:] == "null" {
-					// mlog.Info("auth: %s", auth)
 					return true
 				}
 			}
@@ -146,7 +145,6 @@ func (a *API) getMac(c echo.Context) (err error) {
 
 	reply := <-msg.Reply
 	resp := reply.(string)
-	// c.JSON(200, &resp)
 
 	return c.JSON(http.StatusOK, &resp)
 }
@@ -159,7 +157,6 @@ func (a *API) getPrefs(c echo.Context) (err error) {
 
 	reply := <-msg.Reply
 	resp := reply.(dto.Prefs)
-	// c.JSON(200, &resp)
 
 	return c.JSON(http.StatusOK, &resp)
 }

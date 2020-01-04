@@ -308,7 +308,6 @@ func _getMac() dto.Wake {
 
 	ifaces, _ := net.Interfaces()
 	for _, iface := range ifaces {
-		// mlog.Info("[%s] = %s", iface.Name, iface.HardwareAddr)
 		if iface.Name == "eth0" {
 			wake.Mac = iface.HardwareAddr.String()
 			break

@@ -78,8 +78,6 @@ func redirector(sPort string) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			// log.Printf("host(%s)-port(%s)-scheme(%s)-uri(%s)\n", host, port, scheme, req.RequestURI)
-
 			if scheme != "https" {
 				return c.Redirect(http.StatusMovedPermanently, "https://"+host+sPort+req.RequestURI)
 			}
@@ -134,12 +132,7 @@ func (s *Server) Start() {
 	if s.state.Secure {
 		s.engine.Use(redirector(sPort))
 	}
-	// s.engine.Use(mw.StaticWithConfig(mw.StaticConfig{
-	// 	// Root:  location,
-	// 	HTML5: true,
-	// }))
 
-	// s.engine.Static("/", filepath.Join(location, "index.html"))
 	s.engine.Static("/", filepath.Join(location, "index.html"))
 	s.engine.Static("/favicon.ico", filepath.Join(location, "app", "favicon.ico"))
 	s.engine.Static("/img", filepath.Join(location, "app", "img"))
@@ -228,8 +221,6 @@ func (s *Server) login(c echo.Context) error {
 
 		var crypto crypt.Crypter
 		saltPrefix := ""
-		// crypto := crypt.New(crypt.SHA256)
-		// saltPrefix := sha256_crypt.MagicPrefix
 		switch encType {
 		case "1":
 			crypto = crypt.New(crypt.MD5)
@@ -292,7 +283,6 @@ func (s *Server) handleWs(c echo.Context) (err error) {
 		if err := conn.Read(); err != nil {
 			mlog.Warning("error reading from connection: %s", err)
 		}
-
 	}).ServeHTTP(c.Response(), c.Request())
 
 	return nil
@@ -303,9 +293,7 @@ func (s *Server) onMessage(packet *dto.Packet) {
 }
 
 func (s *Server) onClose(c *ntk.Connection, _ error) {
-	if _, ok := s.pool[c.ID]; ok {
-		delete(s.pool, c.ID)
-	}
+	delete(s.pool, c.ID)
 }
 
 func (s *Server) broadcast(msg *pubsub.Message) {

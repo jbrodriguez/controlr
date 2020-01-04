@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -56,7 +55,7 @@ type options struct {
 func GetPort(match []string) (bool, string, error) {
 	if len(match) == 0 {
 		// no match, i can't parse this
-		return false, "80", errors.New("Unable to parse emhttp flags")
+		return false, "80", errors.New("unable to parse emhttp flags")
 	}
 
 	allFlags := strings.Trim(match[1], " ")
@@ -68,7 +67,7 @@ func GetPort(match []string) (bool, string, error) {
 	args := strings.Split(allFlags, " ")
 	if len(args) <= 2 {
 		// at the very least, I should have -p <port(s)>
-		return false, "80", errors.New("Invalid flags passed to emhttp")
+		return false, "80", errors.New("invalid flags passed to emhttp")
 	}
 
 	opts := options{}
@@ -76,7 +75,7 @@ func GetPort(match []string) (bool, string, error) {
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
 		// sent us incorrect flags
-		return false, "80", errors.New("Invalid flags passed to emhttp (parse)")
+		return false, "80", errors.New("invalid flags passed to emhttp (parse)")
 	}
 
 	ports := strings.Split(opts.Port, ",")
@@ -112,7 +111,7 @@ func Get(client *http.Client, host, resource string) (string, error) {
 		return "", err
 	}
 
-	ep.Path = path.Join(ep.Path, resource)
+	ep.Path = filepath.Join(ep.Path, resource)
 
 	req, err := http.NewRequest("GET", ep.String(), nil)
 	if err != nil {
@@ -144,7 +143,7 @@ func Post(client *http.Client, host, resource string, args map[string]string) (s
 		return "", err
 	}
 
-	ep.Path = path.Join(ep.Path, resource)
+	ep.Path = filepath.Join(ep.Path, resource)
 
 	data := url.Values{}
 	for k, v := range args {
@@ -178,8 +177,6 @@ func Round(a float64) int {
 // GetCmdOutput -
 func GetCmdOutput(command string, args ...string) []string {
 	lines := make([]string, 0)
-
-	// mlog.Info("debug:executing:(%s):(%v)", command, args)
 
 	if len(args) > 0 {
 		ShellEx(command, func(line string) {
@@ -223,13 +220,9 @@ func GenerateCerts(name, location string) error {
 	}
 
 	names := []string{"localhost", name, fmt.Sprintf("%s.local", name)}
-	for _, n := range names {
-		template.DNSNames = append(template.DNSNames, n)
-	}
+	template.DNSNames = append(template.DNSNames, names...)
 
 	template.EmailAddresses = []string{fmt.Sprintf("root@%s", name)}
-
-	// template.DNSNames = append(template.DNSNames, "localhost")
 
 	cert, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
 	if err != nil {
