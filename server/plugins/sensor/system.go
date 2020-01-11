@@ -38,12 +38,18 @@ func (s *SystemSensor) GetReadings(prefs dto.Prefs) []dto.Sample {
 func getSample(unit, line, key string) dto.Sample {
 	fields := strings.Fields(line)
 
+	fmt.Printf("key(%s)-unit(%s)-line(%s)-fields(%+v)\n", key, unit, line, fields)
+
 	value := fields[2]
 
 	index := strings.IndexByte(fields[2], '°')
+	fmt.Printf("index(%d)", index)
 	if index > 0 {
 		strVal := fields[2][1 : index-1]
-		fVal, _ := strconv.ParseFloat(strVal, 64)
+		fVal, e := strconv.ParseFloat(strVal, 64)
+		if e != nil {
+			fmt.Printf("iferr(%s)", e)
+		}
 
 		if unit == "F" {
 			value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32))
@@ -52,7 +58,9 @@ func getSample(unit, line, key string) dto.Sample {
 		}
 	} else {
 		fVal, err := strconv.ParseFloat(value, 64)
-		if err == nil {
+		if err != nil {
+			fmt.Printf("err(%s)", err)
+		} else {
 			if unit == "F" {
 				value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32))
 			} else {
@@ -60,6 +68,8 @@ func getSample(unit, line, key string) dto.Sample {
 			}
 		}
 	}
+
+	fmt.Printf("sample-key(%s)-value(%s)-unit(%s)", key, value, unit)
 
 	return dto.Sample{Key: key, Value: value, Unit: unit, Condition: "neutral"}
 }
