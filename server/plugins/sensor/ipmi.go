@@ -78,7 +78,7 @@ func (s *IpmiSensor) Parse(prefs dto.Prefs, sensors map[string]bool, lines []str
 		// if prefs is "F" and temperature, additionally convert appropriately
 		if prefs.Unit == "F" && fields[2] == "Temperature" {
 			fVal, _ := strconv.ParseFloat(value, 64)
-			value = fmt.Sprintf("%d", lib.Round(9/5*fVal+32)) // probably an int(calculation) should suffice
+			value = fmt.Sprintf("%d", lib.Round((fVal*9/5)+32)) // probably an int(calculation) should suffice
 			unit = "F"
 		}
 
