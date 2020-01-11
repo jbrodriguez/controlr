@@ -1,0 +1,3 @@
+2020-01-11 - 2.18.0
+
+- Fix Celsius to Fahrenheit conversion
