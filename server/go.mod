@@ -2,7 +2,7 @@ module plugin
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.8
 	github.com/jbrodriguez/actor v0.0.0-20170412170624-fa646545c8f3
 	github.com/jbrodriguez/mlog v0.0.0-20180805173533-cbd5ae8e9c53
 	github.com/jbrodriguez/pubsub v0.0.0-20170412143127-17eb44fbbab7
