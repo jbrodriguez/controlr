@@ -105,7 +105,7 @@ func GetPort(match []string) (bool, string, error) {
 }
 
 // Get -
-func Get(client *http.Client, host, resource string) (string, error) {
+func Get(client *http.Client, host, resource, token string) (string, error) {
 	ep, err := url.Parse(host)
 	if err != nil {
 		return "", err
@@ -113,7 +113,10 @@ func Get(client *http.Client, host, resource string) (string, error) {
 
 	ep.Path = filepath.Join(ep.Path, resource)
 
-	req, err := http.NewRequest("GET", ep.String(), nil)
+	params := url.Values{}
+	params.Add("csrf_token", token)
+
+	req, err := http.NewRequest("GET", ep.String(), strings.NewReader(params.Encode()))
 	if err != nil {
 		return "", err
 	}

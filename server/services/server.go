@@ -268,6 +268,12 @@ func (s *Server) login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"token": fmt.Sprintf("%s", err)})
 	}
 
+	payload := map[string]string{"username": username, "password": password}
+
+	reply := make(chan interface{}, 1)
+	s.bus.Pub(&pubsub.Message{Payload: payload, Reply: reply}, "server/auth")
+	<-reply
+
 	return c.JSON(http.StatusOK, map[string]string{"token": t})
 }
 

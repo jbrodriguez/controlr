@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -43,6 +44,11 @@ type Core struct {
 
 	ups    ups.Ups
 	sensor sensor.Sensor
+
+	jar *cookiejar.Jar
+
+	username string
+	password string
 }
 
 // NewCore - constructor
@@ -63,7 +69,9 @@ func NewCore(bus *pubsub.PubSub, settings *lib.Settings, state *model.State) *Co
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	core.client = &http.Client{Timeout: time.Second * 10, Transport: tr}
+
+	core.jar, _ = cookiejar.New(nil)
+	core.client = &http.Client{Jar: core.jar, Timeout: time.Second * 10, Transport: tr}
 
 	return core
 }
@@ -78,6 +86,7 @@ func (c *Core) Start() error {
 	c.actor.Register("api/GET_INFO", c.getInfo)
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
+	c.actor.Register("server/auth", c.auth)
 
 	wake := _getMac()
 	prefs := _getPrefs()
@@ -141,13 +150,40 @@ func (c *Core) Stop() {
 	mlog.Info("stopped service Core ...")
 }
 
+func (c *Core) auth(msg *pubsub.Message) {
+	auth := msg.Payload.(map[string]string)
+
+	c.username = auth["username"]
+	c.password = auth["password"]
+
+	msg.Reply <- true
+}
+
 // PLUGIN APP HANDLERS
 func (c *Core) refresh(msg *pubsub.Message) {
 	go func() {
 		dckURL := c.manager.GetDockerURL()
 		vmURL := c.manager.GetVMURL()
 
-		_dockers, err := lib.Get(c.client, c.state.Host, dckURL)
+		data := map[string]string{
+			"username": c.username,
+			"password": c.password,
+		}
+		if c.state.CsrfToken != "" {
+			data["csrf_token"] = c.state.CsrfToken
+		}
+
+		_, err := lib.Post(c.client, c.state.Host, "/login", data)
+		if err != nil {
+			message := fmt.Sprintf("Unable to get login: %s", err)
+			mlog.Warning(message)
+			payload := dto.Feedback{Code: 1014, Msg: message}
+			outbound := &dto.Packet{Topic: "model/ACCESS_ERROR", Payload: payload}
+			c.bus.Pub(&pubsub.Message{Id: msg.Id, Payload: outbound}, "socket:broadcast")
+			return
+		}
+
+		_dockers, err := lib.Get(c.client, c.state.Host, dckURL, c.state.CsrfToken)
 		if err != nil {
 			message := fmt.Sprintf("Unable to get unRAID state (dockers): %s", err)
 			mlog.Warning(message)
@@ -157,7 +193,7 @@ func (c *Core) refresh(msg *pubsub.Message) {
 			return
 		}
 
-		_vms, err := lib.Get(c.client, c.state.Host, vmURL)
+		_vms, err := lib.Get(c.client, c.state.Host, vmURL, c.state.CsrfToken)
 		if err != nil {
 			message := fmt.Sprintf("Unable to get unRAID state (vms): %s", err)
 			mlog.Warning(message)
@@ -167,7 +203,7 @@ func (c *Core) refresh(msg *pubsub.Message) {
 			return
 		}
 
-		_users, err := lib.Get(c.client, c.state.Host, "/state/users.ini")
+		_users, err := lib.Get(c.client, c.state.Host, "/state/users.ini", c.state.CsrfToken)
 		if err != nil {
 			message := fmt.Sprintf("Unable to get unRAID state (users): %s", err)
 			mlog.Warning(message)

@@ -61,6 +61,10 @@ $(function(){
 	checkRUNNING(document.controlr_settings);
 });
 
+function isNumber(value) {
+   return typeof value === 'number' && isFinite(value);
+}
+
 function resetDATA(form) {
 	form.PORT.value = "2378";
 	form.CERTDIR.value = "/boot/config/ssl/certs";

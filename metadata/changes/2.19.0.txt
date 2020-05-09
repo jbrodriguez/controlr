@@ -1,0 +1,3 @@
+2020-05-09 - 2.19.0
+- Improvements to port and ip address detection
+- Other bug fixes and improvements

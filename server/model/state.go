@@ -7,6 +7,7 @@ type State struct {
 	Version      string
 	CsrfToken    string
 	Host         string
+	Origin       string
 	Secure       bool
 	Cert         string
 	UseSelfCerts bool

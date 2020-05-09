@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -72,8 +73,6 @@ func (a *App) Run(settings *lib.Settings) {
 		mlog.Fatalf("Unable to retrieve unRAID info (%s). Exiting now ...", err)
 	}
 
-	// mlog.Info("Connections to emhttp via %s:%s ...", data["protocol"], data["port"])
-
 	core := services.NewCore(bus, settings, state)
 	server := services.NewServer(bus, settings, state)
 	api := services.NewAPI(bus, settings, state)
@@ -124,6 +123,56 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 		state.CsrfToken = strings.Replace(tmp, "\"", "", -1)
 	}
 
+	return getNetworkInfo(state, apiDir, certDir, file)
+}
+
+func getNetworkInfo(state *model.State, apiDir, certDir string, file ini.File) (*model.State, error) {
+	state.Cert = getCertificateName(certDir, state.Name)
+	state.UseSelfCerts = false
+	if state.Cert == "" {
+		if err := provisionSelfCerts(certDir, state.Name); err != nil {
+			return nil, err
+		}
+
+		state.UseSelfCerts = true
+	}
+
+	ipaddress, err := getIPAddress(apiDir)
+	if err != nil {
+		return nil, err
+	}
+
+	nginx := "/var/run/nginx.origin"
+	exists, err := lib.Exists(nginx)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+		data, err := ioutil.ReadFile(nginx)
+		if err != nil {
+			return nil, err
+		}
+
+		origin := string(data)
+		origin = strings.Replace(origin, "\n", "", -1)
+
+		secure := false
+		if strings.HasPrefix(origin, "https") {
+			secure = true
+		}
+
+		parts := strings.Split(origin, ":")
+
+		state.Secure = secure
+		state.Origin = origin
+		state.Host = fmt.Sprintf("%s://%s:%s", parts[0], ipaddress, parts[2])
+
+		mlog.Info("host(%s)", state.Host)
+
+		return state, nil
+	}
+
 	// use main ssl config file
 	ident, err := ini.LoadFile(identCfg)
 	if err != nil {
@@ -141,16 +190,6 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 	usessl = strings.Replace(usessl, "\"", "", -1)
 	port = strings.Replace(port, "\"", "", -1)
 	portssl = strings.Replace(portssl, "\"", "", -1)
-
-	state.Cert = getCertificateName(certDir, state.Name)
-	state.UseSelfCerts = false
-	if state.Cert == "" {
-		if err := provisionSelfCerts(certDir, state.Name); err != nil {
-			return nil, err
-		}
-
-		state.UseSelfCerts = true
-	}
 
 	secure := state.Cert != ""
 
@@ -175,7 +214,7 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 			portssl = ":" + portssl
 		}
 
-		state.Host = fmt.Sprintf("https://127.0.0.1%s/", portssl)
+		state.Host = fmt.Sprintf("https://%s%s/", ipaddress, portssl)
 	} else {
 		if port == "" || port == "80" {
 			port = ""
@@ -183,10 +222,23 @@ func getUnraidInfo(apiDir, certDir string) (*model.State, error) {
 			port = ":" + port
 		}
 
-		state.Host = fmt.Sprintf("http://127.0.0.1%s/", port)
+		state.Host = fmt.Sprintf("http://%s%s/", ipaddress, port)
 	}
 
 	return state, nil
+}
+
+func getIPAddress(apiDir string) (string, error) {
+	network, err := ini.LoadFile(filepath.Join(apiDir, "network.ini"))
+	if err != nil {
+		return "", err
+	}
+
+	var tmp string
+	tmp, _ = network.Get("eth0", "IPADDR:0")
+	ipaddress := strings.Replace(tmp, "\"", "", -1)
+
+	return ipaddress, nil
 }
 
 func getCertificateName(certDir, name string) string {
