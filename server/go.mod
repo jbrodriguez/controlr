@@ -6,7 +6,7 @@ require (
 	github.com/jbrodriguez/actor v0.0.0-20170412170624-fa646545c8f3
 	github.com/jbrodriguez/mlog v0.0.0-20180805173533-cbd5ae8e9c53
 	github.com/jbrodriguez/pubsub v0.0.0-20170412143127-17eb44fbbab7
-	github.com/jessevdk/go-flags v1.4.0
+	github.com/jessevdk/go-flags v1.5.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/mattn/go-colorable v0.1.0 // indirect
@@ -19,7 +19,6 @@ require (
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 // indirect
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
-	golang.org/x/sys v0.0.0-20190209173611-3b5209105503 // indirect
 )
 
 go 1.13
