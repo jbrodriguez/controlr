@@ -1,3 +1,21 @@
+Version 2.22.0 - 2021-07-03
+- Implement origin endpoint
+- Run npm audit fix
+- Fix build
+- Switch to yarn
+
+
+Version 2.21.0 - 2021-07-03
+- Implement origin endpoint
+- Run npm audit fix
+- Fix build
+
+
+Version 2.20.0 - 2021-07-03
+- Implement origin endpoint
+- Run npm audit fix
+
+
 Version 2.19.1 - 2021-04-27
 - Fix ownership, permissions and paths (Unraid compliance)
 

@@ -1,5 +1,7 @@
 package model
 
+import "plugin/dto"
+
 // State -
 type State struct {
 	Name         string
@@ -7,7 +9,7 @@ type State struct {
 	Version      string
 	CsrfToken    string
 	Host         string
-	Origin       string
+	Origin       dto.Origin
 	Secure       bool
 	Cert         string
 	UseSelfCerts bool

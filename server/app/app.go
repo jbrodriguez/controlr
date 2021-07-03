@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"plugin/dto"
 	"plugin/lib"
 	"plugin/model"
 	"plugin/services"
@@ -72,6 +73,8 @@ func (a *App) Run(settings *lib.Settings) {
 	if err != nil {
 		mlog.Fatalf("Unable to retrieve unRAID info (%s). Exiting now ...", err)
 	}
+
+	mlog.Info("state(%+v)", state)
 
 	core := services.NewCore(bus, settings, state)
 	server := services.NewServer(bus, settings, state)
@@ -162,13 +165,13 @@ func getNetworkInfo(state *model.State, apiDir, certDir string, file ini.File) (
 			secure = true
 		}
 
+		params := lib.GetParams(`(?P<protocol>^[^:]*)://(?P<host>[^:]*):(?P<port>.*)`, origin)
+
 		parts := strings.Split(origin, ":")
 
 		state.Secure = secure
-		state.Origin = origin
+		state.Origin = dto.Origin{Protocol: params["protocol"], Host: params["host"], Port: params["port"], Address: ipaddress}
 		state.Host = fmt.Sprintf("%s://%s:%s", parts[0], ipaddress, parts[2])
-
-		mlog.Info("host(%s)", state.Host)
 
 		return state, nil
 	}

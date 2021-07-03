@@ -32,7 +32,7 @@ build: clean
 
 server: clean
 	go build fmt
-	env GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o ../dist/controlr controlr.go
+	env GOOS=linux GOARCH=amd64 env CGO_ENABLED=0 go build -ldflags "-X main.Version=$(mb_plgver)|$(mb_version)" -gcflags "all=-trimpath=$GOPATH" -v -o ../dist/controlr controlr.go
 
 # run unit tests with code coverage
 test:

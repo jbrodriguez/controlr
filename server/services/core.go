@@ -86,6 +86,7 @@ func (c *Core) Start() error {
 	c.actor.Register("api/GET_INFO", c.getInfo)
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
+	c.actor.Register("api/GET_ORIGIN", c.onGetOrigin)
 	c.actor.Register("server/auth", c.auth)
 
 	wake := _getMac()
@@ -292,6 +293,15 @@ func (c *Core) getMac(msg *pubsub.Message) {
 
 func (c *Core) getPrefs(msg *pubsub.Message) {
 	msg.Reply <- _getPrefs()
+}
+
+func (c *Core) onGetOrigin(msg *pubsub.Message) {
+	msg.Reply <- c.getOrigin()
+}
+
+func (c *Core) getOrigin() *dto.Origin {
+	return &c.state.Origin
+
 }
 
 func (c *Core) createSensor() sensor.Sensor {

@@ -52,6 +52,8 @@ func (a *API) Start() {
 	a.engine.Use(mw.Logger())
 	a.engine.Use(mw.Recover())
 
+	a.engine.GET("/origin", a.getOrigin)
+
 	r := a.engine.Group(apiVersion)
 	r.Use(mw.BasicAuthWithConfig(mw.BasicAuthConfig{
 		Skipper: func(c echo.Context) bool {
@@ -157,6 +159,18 @@ func (a *API) getPrefs(c echo.Context) (err error) {
 
 	reply := <-msg.Reply
 	resp := reply.(dto.Prefs)
+
+	return c.JSON(http.StatusOK, &resp)
+}
+
+func (a *API) getOrigin(c echo.Context) (err error) {
+	mlog.Info("received /origin")
+
+	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
+	a.bus.Pub(msg, "api/GET_ORIGIN")
+
+	reply := <-msg.Reply
+	resp := reply.(*dto.Origin)
 
 	return c.JSON(http.StatusOK, &resp)
 }
