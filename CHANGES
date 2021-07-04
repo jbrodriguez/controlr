@@ -1,3 +1,11 @@
+Version 2.23.0 - 2021-07-04
+- Implement origin endpoint
+- Run npm audit fix
+- Fix build
+- Switch to yarn
+- Add github token
+
+
 Version 2.22.0 - 2021-07-03
 - Implement origin endpoint
 - Run npm audit fix
