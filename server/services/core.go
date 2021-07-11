@@ -300,6 +300,9 @@ func (c *Core) onGetOrigin(msg *pubsub.Message) {
 }
 
 func (c *Core) getOrigin() *dto.Origin {
+	if c.state.Origin.Host == "" {
+		c.state.Origin = *lib.GetOrigin(c.settings.APIDir)
+	}
 	return &c.state.Origin
 
 }

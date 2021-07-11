@@ -1,3 +1,7 @@
+Version 2.23.1 - 2021-07-11
+- Implement onDemand origin extraction
+
+
 Version 2.23.0 - 2021-07-04
 - Implement origin endpoint
 - Run npm audit fix
