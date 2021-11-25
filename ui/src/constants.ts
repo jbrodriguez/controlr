@@ -17,6 +17,8 @@ export const GOT_VERSION = 'action/GOT_VERSION'
 export const LOGIN = 'action/LOGIN'
 export const INIT = 'action/INIT'
 export const SAVE_CHANGES = 'action/SAVE_CHANGES'
+export const GET_BARCODE = 'action/GET_BARCODE'
+export const GOT_BARCODE = 'action/GOT_BARCODE'
 
 // socket - actions (incoming)
 export const USER_UPDATED = 'model/USER_UPDATED'

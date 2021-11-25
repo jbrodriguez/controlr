@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/jbrodriguez/mlog"
 	"github.com/jbrodriguez/pubsub"
 	ini "github.com/vaughan0/go-ini"
+	qrcode "github.com/yeqown/go-qrcode"
 
 	"plugin/dto"
 	"plugin/lib"
@@ -87,6 +89,7 @@ func (c *Core) Start() error {
 	c.actor.Register("api/GET_MAC", c.getMac)
 	c.actor.Register("api/GET_PREFS", c.getPrefs)
 	c.actor.Register("api/GET_ORIGIN", c.onGetOrigin)
+	c.actor.Register("api/GET_BARCODE", c.onGetBarcode)
 	c.actor.Register("server/auth", c.auth)
 
 	wake := _getMac()
@@ -308,6 +311,35 @@ func (c *Core) getOrigin() *dto.Origin {
 	}
 	return &c.state.Origin
 
+}
+
+func (c *Core) onGetBarcode(msg *pubsub.Message) {
+	msg.Reply <- c.buildQRCode()
+}
+
+func (c *Core) buildQRCode() string {
+	origin := lib.GetOrigin(c.settings.APIDir)
+
+	// mlog.Info("origin %+v", origin)
+
+	o, err := json.Marshal(origin)
+	if err != nil {
+		mlog.Warning("Unable to get origin: %s", err)
+		return ""
+	}
+
+	qrc, err := qrcode.New(string(o))
+	if err != nil {
+		mlog.Warning("Unable to create qrcode: %s", err)
+		return ""
+	}
+
+	if err := qrc.Save("/tmp/qrcode.jpg"); err != nil {
+		mlog.Warning("Unable to save qrcode: %s", err)
+		return ""
+	}
+
+	return "done"
 }
 
 func (c *Core) createSensor() sensor.Sensor {

@@ -17,6 +17,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
+	github.com/yeqown/go-qrcode v1.5.6
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 // indirect
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
 	golang.org/x/sys v0.0.0-20190209173611-3b5209105503 // indirect

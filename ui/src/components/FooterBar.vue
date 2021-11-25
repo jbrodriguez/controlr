@@ -4,7 +4,9 @@
       <li class="row start-xs">
         <div class="col-xs-12">
           <span>&nbsp;Copyright&nbsp;&copy;</span>
-          <a class="dark-green" href="https://jbrio.net/posts/">&nbsp;Juan B. Rodriguez</a>
+          <a class="dark-green" href="https://jbrio.net/posts/"
+            >&nbsp;Juan B. Rodriguez</a
+          >
         </div>
       </li>
     </ul>
@@ -20,35 +22,18 @@
         <div class="col-xs-12">
           <div class="flex end-xs">
             <a
-              class="flex end-xs"
-              title="Download on the App Store"
-              href="https://itunes.apple.com/us/app/controlr/id1152586217?ls=1&mt=8"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src="../assets/appstore.png">
-            </a>
-            
-            <a
-              class="flex middle-xs ml2"
-              title="Get it on Google Play"
-              href="https://play.google.com/store/apps/details?id=io.jbrodriguez.controlr&utm_source=global_co&utm_medium=prtnr&utm_content=Mar2515&utm_campaign=PartBadge&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src="../assets/gbadge.png">
-            </a>
-            
-            <a
               class="flex middle-xs ml2"
               title="Lime Technology"
               href="https://lime-technology.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="../assets/unraid.svg" v-bind:style="{height: iconSize}">
+              <img
+                src="../assets/unraid.svg"
+                v-bind:style="{ height: iconSize }"
+              />
             </a>
-            
+
             <a
               class="flex middle-xs ml2"
               title="Juan B. Rodriguez"
@@ -56,7 +41,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="../assets/jbrio.png">
+              <img src="../assets/jbrio.png" />
             </a>
           </div>
         </div>
@@ -70,13 +55,13 @@ import Vue from 'vue'
 import { mapState } from 'vuex'
 
 export default Vue.extend({
-	name: 'footer-bar',
-	data() {
-		return {
-			iconSize: '45px',
-		}
-	},
-	computed: mapState(['version']),
+  name: 'footer-bar',
+  data() {
+    return {
+      iconSize: '45px',
+    }
+  },
+  computed: mapState(['version']),
 })
 </script>
 

@@ -30,6 +30,13 @@ class Api {
 			.then(data => data)
 	}
 
+	public getBarcode: () => Promise<any> = () => {
+		return fetch(this.host + '/barcode')
+			.then(checkStatus)
+			.then(resp => resp.text())
+			.then(data => data)
+	}	
+
 	public login: (params: IAuthParams) => Promise<any> = params => {
 		return fetch(this.host + '/login', {
 			method: 'POST',

@@ -44,6 +44,8 @@ const state: IState = {
 
   apps: {},
   appOrder: [],
+
+  qrcode: '',
 }
 
 const actions: ActionTree<IState, any> = {
@@ -65,6 +67,11 @@ const actions: ActionTree<IState, any> = {
       )
       .catch(err => context.commit(constants.LOGIN_FAILURE, err))
   },
+
+  [constants.GET_BARCODE]: async (context: ActionContext<IState, any>) => {
+    const barcode = await api.getBarcode()
+    return context.commit(constants.GOT_BARCODE, barcode)
+  },  
 
   [constants.INIT]: (context: ActionContext<IState, any>) => {
     const proto = document.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -134,6 +141,9 @@ const mutations: MutationTree<IState> = {
 
   [constants.GOT_VERSION]: (local: IState, data: IVersion) =>
     (local.version = data.version),
+
+  [constants.GOT_BARCODE]: (local: IState, data: string) =>
+    (local.qrcode = data),    
 
   [constants.LOGIN_SUCCESS]: (
     local: IState,

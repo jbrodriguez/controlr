@@ -138,9 +138,11 @@ func (s *Server) Start() {
 	s.engine.Static("/img", filepath.Join(location, "app", "img"))
 	s.engine.Static("/js", filepath.Join(location, "app", "js"))
 	s.engine.Static("/css", filepath.Join(location, "app", "css"))
+	s.engine.Static("/qrcode.jpg", "/tmp/qrcode.jpg")
 
 	s.engine.GET("/version", s.getVersion)
 	s.engine.POST("/login", s.login)
+	s.engine.GET("/barcode", s.getBarcode)
 
 	s.engine.GET("/state/plugins/*", s.proxyHandler)
 	s.engine.GET("/plugins/*", s.proxyHandler)
@@ -275,6 +277,18 @@ func (s *Server) login(c echo.Context) error {
 	<-reply
 
 	return c.JSON(http.StatusOK, map[string]string{"token": t})
+}
+
+func (s *Server) getBarcode(c echo.Context) error {
+	mlog.Info("received /barcode")
+
+	msg := &pubsub.Message{Reply: make(chan interface{}, capacity)}
+	s.bus.Pub(msg, "api/GET_BARCODE")
+
+	reply := <-msg.Reply
+	resp := reply.(string)
+
+	return c.String(http.StatusOK, resp)
 }
 
 // WEBSOCKET handler

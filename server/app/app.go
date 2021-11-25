@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -10,7 +9,6 @@ import (
 	"strings"
 	"syscall"
 
-	"plugin/dto"
 	"plugin/lib"
 	"plugin/model"
 	"plugin/services"
@@ -140,93 +138,11 @@ func getNetworkInfo(state *model.State, apiDir, certDir string, file ini.File) (
 		state.UseSelfCerts = true
 	}
 
-	ipaddress, err := getIPAddress(apiDir)
-	if err != nil {
-		return nil, err
-	}
+	origin := lib.GetOrigin(apiDir)
 
-	nginx := "/var/run/nginx.origin"
-	exists, err := lib.Exists(nginx)
-	if err != nil {
-		return nil, err
-	}
-
-	if exists {
-		data, err := ioutil.ReadFile(nginx)
-		if err != nil {
-			return nil, err
-		}
-
-		origin := string(data)
-		origin = strings.Replace(origin, "\n", "", -1)
-
-		secure := false
-		if strings.HasPrefix(origin, "https") {
-			secure = true
-		}
-
-		params := lib.GetParams(`(?P<protocol>^[^:]*)://(?P<host>[^:]*):(?P<port>.*)`, origin)
-
-		parts := strings.Split(origin, ":")
-
-		state.Secure = secure
-		state.Origin = dto.Origin{Protocol: params["protocol"], Host: params["host"], Port: params["port"], Address: ipaddress}
-		state.Host = fmt.Sprintf("%s://%s:%s", parts[0], ipaddress, parts[2])
-
-		return state, nil
-	}
-
-	// use main ssl config file
-	ident, err := ini.LoadFile(identCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	var usessl, port, portssl string
-
-	// if the key is missing, usessl, port and portssl are set to ""
-	usessl, _ = ident.Get("", "USE_SSL")
-	port, _ = ident.Get("", "PORT")
-	portssl, _ = ident.Get("", "PORTSSL")
-
-	// remove quotes from unRAID's ini file
-	usessl = strings.Replace(usessl, "\"", "", -1)
-	port = strings.Replace(port, "\"", "", -1)
-	portssl = strings.Replace(portssl, "\"", "", -1)
-
-	secure := state.Cert != ""
-
-	// if usessl == "" this isn't a 6.4.x server, try to read emhttpPort; if that doesn't work
-	// it will default to port 80
-	// otherwise usessl has some value, the plugin will serve off http if the value is no, in any
-	// other case, it will serve off https
-	if usessl == "" {
-		secure = false
-		port, _ = file.Get("", "emhttpPort")
-		port = strings.Replace(port, "\"", "", -1)
-	} else if usessl == "no" {
-		secure = false
-	}
-
-	state.Secure = secure
-
-	if secure {
-		if portssl == "" || portssl == "443" {
-			portssl = ""
-		} else {
-			portssl = ":" + portssl
-		}
-
-		state.Host = fmt.Sprintf("https://%s%s/", ipaddress, portssl)
-	} else {
-		if port == "" || port == "80" {
-			port = ""
-		} else {
-			port = ":" + port
-		}
-
-		state.Host = fmt.Sprintf("http://%s%s/", ipaddress, port)
-	}
+	state.Secure = strings.Contains(origin.Protocol, "https")
+	state.Origin = *origin
+	state.Host = fmt.Sprintf("%s://%s", origin.Protocol, origin.Host)
 
 	return state, nil
 }

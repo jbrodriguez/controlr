@@ -21,6 +21,8 @@ export interface IState {
 
 	apps: IUserApps
 	appOrder: string[]
+
+	qrcode: string
 }
 
 export interface IVersion {
