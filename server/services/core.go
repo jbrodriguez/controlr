@@ -138,6 +138,8 @@ func (c *Core) Start() error {
 		mlog.Fatal(err)
 	}
 
+	c.buildQRCode()
+
 	go c.actor.React()
 
 	return nil

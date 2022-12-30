@@ -11,6 +11,7 @@ $controlr_certdir = isset($controlr_cfg['CERTDIR']) ? $controlr_cfg['CERTDIR'] 	
 $controlr_ups = isset($controlr_cfg['UPS']) ? $controlr_cfg['UPS'] 	: "enable";
 $controlr_running = shell_exec("pidof controlr | wc -w");
 $controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION | tr '\n' ' '");
+$qrcode_base64 = shell_exec("cat /tmp/qrcode.jpg | base64 | tr '\n' ' '");
 ?>
 
 <script type="text/javascript">
@@ -22,10 +23,13 @@ $controlr_version = shell_exec("cat /usr/local/emhttp/plugins/controlr/VERSION |
 	var url = document.location.protocol + '//' + document.location.hostname + ':' + port + '/';
 	var isRunning = <?=$controlr_running;?> === 1;
 	var version = '<?=$controlr_version;?>';
+	var qrcode = '<?=$qrcode_base64;?>';
+	var color = isRunning ? 'color:green' : 'color:orange'
 	if (isRunning) {
-		document.write("<a style='color:green;' target='_blank' href='" + url + "' title='ControlR plugin'><b>Open Web UI ( v" + version + ")</b></a>");
+		document.write("<span style='color:green;'><b>ControlR v" + version + "</b></span> <br /> <br />");
+		document.write("<img src='data:image/jpeg;base64," + qrcode + "' width=150 />")
 	} else {
-		document.write("<b><font style='color:orange;'>ControlR v" + version + "</font></b>")
+		document.write("<b><font style='color:orange;'>ControlR v" + version + " (not running)</font></b>")
 	}
 </script>
 

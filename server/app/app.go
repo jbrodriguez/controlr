@@ -75,11 +75,9 @@ func (a *App) Run(settings *lib.Settings) {
 	mlog.Info("state(%+v)", state)
 
 	core := services.NewCore(bus, settings, state)
-	server := services.NewServer(bus, settings, state)
 	api := services.NewAPI(bus, settings, state)
 
 	mlog.FatalIfError(core.Start())
-	server.Start()
 	api.Start()
 
 	mlog.Info("Press Ctrl+C to stop ...")
@@ -89,7 +87,6 @@ func (a *App) Run(settings *lib.Settings) {
 	mlog.Info("Received signal: (%s) ... shutting down the app now ...", <-c)
 
 	api.Stop()
-	server.Stop()
 	core.Stop()
 
 	if err := mlog.Stop(); err != nil {
