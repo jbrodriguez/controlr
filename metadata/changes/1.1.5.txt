@@ -1,5 +1,0 @@
-2017-02-02 - 1.1.5
-
-This release provides the following fixes:
-- Support getting logs for servers with no password set
-- Support 6.3.0-rc9

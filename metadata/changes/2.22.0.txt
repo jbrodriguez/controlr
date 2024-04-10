@@ -1,5 +1,0 @@
-2021-07-03 - 2.22.0
-- Implement origin endpoint
-- Run npm audit fix
-- Fix build
-- Switch to yarn

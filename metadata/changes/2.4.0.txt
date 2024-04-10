@@ -1,4 +1,0 @@
-2017-10-08 - 2.4.0
-
-Collect data for /info endpoint on app start.
-Listen for changes to prefs file to update the cached data.

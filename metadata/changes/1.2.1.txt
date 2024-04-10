@@ -1,3 +1,0 @@
-2017-03-17 - 1.2.1
-
-- Start the plugin on install (if it was running previously)

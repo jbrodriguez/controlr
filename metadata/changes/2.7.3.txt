@@ -1,4 +1,0 @@
-2018-01-26 - 2.7.3
-
-- Quote ipmi-sensor params
-- Use main ssl config file

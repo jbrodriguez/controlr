@@ -1,4 +1,0 @@
-2017-03-20 - 1.2.3
-
-- Improve bundle script to account for slash character in the release notes
-- Stop execution if an error occurs during plugin text substitution

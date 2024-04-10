@@ -1,4 +1,0 @@
-2021-07-03 - 2.21.0
-- Implement origin endpoint
-- Run npm audit fix
-- Fix build

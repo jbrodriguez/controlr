@@ -1,4 +1,0 @@
-2018-01-29 - 2.7.5
-
-- Fix bump-hook script
-- Fix apcaccess invocation
