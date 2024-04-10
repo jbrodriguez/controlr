@@ -1,3 +1,0 @@
-2017-10-25 - 2.5.0
-
-- Implement UPS status support

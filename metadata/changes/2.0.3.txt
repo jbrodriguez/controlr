@@ -1,9 +1,0 @@
-2017-06-23 - 2.0.3
-
-The plugin will now start on the same protocol as emhttp.
-If both http & https are enabled, it will start on https.
-
-Additionally:
-- Fix Mixed Content error
-- Improve link construction
-- Fix issue with unescaped entities

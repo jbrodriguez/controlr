@@ -1,28 +1,6 @@
 # ControlR
 
-_tl;dr_ **ControlR** is a companion plugin for the [ControlR app](https://www.apertoire.com/controlr/).
-
-## Introduction
-
-This plugin allows you to set up user permissions for the ControlR app.
-
-<br>Operation is simple
-
-- Add a user in the unRAID webGUI
-
-- Select that user in the plugin
-
-- Define permissions for the user
-
-<br>The following are the allowed permissions:
-
-**VISIBLE:** If turned off, the docker/vm will not appear in the app
-
-**READ:** User can see the docker/vm, but actions are disabled
-
-**WRITE:** User can edit/remove the docker/vm
-
-**EXECUTE:** User can start/stop the docker/vm
+_tl;dr_ **ControlR** is a companion plugin for the [ControlR app](https://www.apertoire.com/).
 
 ## Installation
 
@@ -37,7 +15,7 @@ There are 2 ways to install this application
 - Plugins Tab (manual)<br/>
   Go to the Plugins tab<br/>
   Click on Install Plugin<br/>
-  Paste the following address in the input field: https://raw.githubusercontent.com/jbrodriguez/unraid/master/plugins/controlr.plg<br/>
+  Paste the following address in the input field: https://github.com/jbrodriguez/controlr/releases/latest/download/controlr.plg<br/>
   Click Install
 
 ## Running the app
@@ -62,22 +40,3 @@ After installing the plugin, you can access the web UI, via the following method
 - [Go](https://golang.org/) - Back End
 - [echo](https://github.com/labstack/echo) - REST and websocket api
 - [pubsub](https://github.com/tuxychandru/pubsub/) (slightly modified)
-- [React](https://facebook.github.io/react/) - Front End
-- [mobx](https://github.com/mobxjs/mobx) - Simple, scalable state management
-- [tachyons-sass](https://github.com/tachyons-css/tachyons-sass) - Transpiled Sass partials for Tachyons
-- [flexboxgrid](http://flexboxgrid.com/) - CSS3 flex based grid system framework
-- [Webpack](https://webpack.github.io/) - Build toolchain
-
-## Release
-
-- update VERSION to the version you need
-- `scripts/bump-hook`
-- edit metadata/changes/<version> to sanitize the release notes
-- edit CHANGES to add the release notes for this version
-- `scripts/bundle`
-- `scripts/rel-push-controlr`
-- `scripts/rel-push-unraid`
-
-## License
-
-[MIT license](http://jbrodriguez.mit-license.org)

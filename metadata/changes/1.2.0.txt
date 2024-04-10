@@ -1,3 +1,0 @@
-2017-03-08 - 1.2.0
-
-- Add endpoint to obtain server's mac address

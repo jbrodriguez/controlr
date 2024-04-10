@@ -1,4 +1,0 @@
-2017-06-16 - 2.0.1
-
-- Add https port to unRAID UI settings
-- Fix issue with empty ip address

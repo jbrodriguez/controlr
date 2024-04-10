@@ -1,2 +1,0 @@
-2016-10-26 - 1.0.1
-- Log to file by default

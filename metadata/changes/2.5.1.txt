@@ -1,4 +1,0 @@
-2017-10-27 - 2.5.1
-
-- Fix issue with nut config file that caused a crash
-

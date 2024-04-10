@@ -1,4 +1,0 @@
-2017-08-02 - 2.2.0
-
-- Enable ControlR app to get temperature unit 
-from server's GUI preferences
